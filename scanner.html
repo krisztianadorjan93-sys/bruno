@@ -157,11 +157,11 @@ function showOps(state){
   if(base==='ELFOGYOTT'||base==='MEGSEMMIS\u00CDTVE'){document.getElementById('ops').innerHTML='<div class="info ir">Lezart tub - nem lehet vele muveletet vegezni.</div>';return}
 
   var o=[];
-  if(base==='KONYH\u00C1N') o.push({id:'szallitas',l:'Szallitas atvetel',d:'Kiszallitas az uzletbe',c:'op1'});
+  if(base==='KONYH\u00C1N'){document.getElementById('ops').innerHTML='<div class="info io">&#9888;&#65039; Ez a tub m&#233;g a konyh&#225;n van. Sz&#225;ll&#237;t&#225;shoz haszn&#225;ld a <b>Sz&#225;ll&#237;t&#225;s tool</b>-t.</div>';return}
   if(base==='\u00DCZLETBEN'){o.push({id:'kibontas',l:'Kibontas',d:'Pultba kerul',c:'op2'});o.push({id:'athelyezes',l:'Athelyezes',d:'Masik uzletbe',c:'op6',x:'h'})}
   if(base==='KIBONTVA'){o.push({id:'elfogyott',l:'Elfogyott',d:'Tub kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos lett',d:'Maradt benne, hutobe',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva/betoltve',c:'op5',cf:1})}
   if(base==='MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R'){o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Betoltve az ujba',c:'op5',cf:1});o.push({id:'mennyiseg',l:'Mennyiseg modositas',d:'Arany valtozott',c:'op4',x:'m'})}
-  if(base==='ISMERETLEN'){o.push({id:'szallitas',l:'Szallitas',d:'Konyharol',c:'op1'});o.push({id:'kibontas',l:'Kibontas',d:'Pultba',c:'op2'});o.push({id:'elfogyott',l:'Elfogyott',d:'Kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos',d:'Maradt benne',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva',c:'op5',cf:1})}
+  if(base==='ISMERETLEN'){o.push({id:'kibontas',l:'Kibontas',d:'Pultba',c:'op2'});o.push({id:'elfogyott',l:'Elfogyott',d:'Kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos',d:'Maradt benne',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva',c:'op5',cf:1})}
 
   if(!o.length){document.getElementById('ops').innerHTML='<div class="info ir">Nincs elerheto muvelet.</div>';return}
   document.getElementById('ops').innerHTML=o.map(function(op){return '<button class="op '+op.c+'" onclick="pick(\''+op.id+'\',\''+(op.x||'')+'\','+(op.cf?1:0)+')"><span class="oi">'+op.l.split(' ')[0]+'</span><span class="ot">'+op.l.split(' ').slice(1).join(' ')+'<span class="od">'+op.d+'</span></span></button>'}).join('');
