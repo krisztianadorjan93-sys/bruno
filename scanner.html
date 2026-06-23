@@ -28,10 +28,10 @@ select:focus,input:focus{border-color:#D0783A}
 .tub-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}.tub-batch{font-family:monospace;font-size:12px;color:#D0783A}
 .tub-state{margin-top:8px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;display:inline-block}
 .ts-k{background:#04342C;color:#5DCAA5}.ts-s{background:#042C53;color:#85B7EB}.ts-o{background:#412402;color:#FAC775}.ts-c{background:#2a2a2a;color:#888}
-.op{width:100%;padding:14px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:left;display:flex;align-items:center;gap:10px;transition:background .15s}
-.op .oi{font-size:18px}.op .ot{flex:1}.op .od{font-size:10px;font-weight:400;opacity:.7;display:block;margin-top:2px}
+.op{width:100%;min-height:56px;padding:14px 16px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:left;display:flex;align-items:center;gap:12px;transition:background .15s}
+.op .oi{font-size:22px;width:32px;text-align:center;flex-shrink:0}.op .ot{flex:1}.op .ol{font-size:14px;font-weight:700;display:block}.op .od{font-size:12px;font-weight:400;color:inherit;opacity:.7;display:block;margin-top:2px}
 .op1{background:#04342C;color:#5DCAA5;border:1px solid #0F6E56}.op2{background:#042C53;color:#85B7EB;border:1px solid #185FA5}
-.op3{background:#1a1a1a;color:#aaa;border:1px solid #333}.op4{background:#412402;color:#FAC775;border:1px solid #854F0B}
+.op3{background:#0a2a0a;color:#6aca6a;border:1px solid #1a5a1a}.op4{background:#412402;color:#FAC775;border:1px solid #854F0B}
 .op5{background:#2a0a0a;color:#ff8888;border:1px solid #5a1a1a}.op6{background:#1a1a3a;color:#AFA9EC;border:1px solid #3a3a6a}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:16px}
 .overlay.s{display:flex}.obox{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:20px;max-width:340px;width:100%;text-align:center}
@@ -158,13 +158,13 @@ function showOps(state){
 
   var o=[];
   if(base==='KONYH\u00C1N'){document.getElementById('ops').innerHTML='<div class="info io">&#9888;&#65039; Ez a tub m&#233;g a konyh&#225;n van. Sz&#225;ll&#237;t&#225;shoz haszn&#225;ld a <b>Sz&#225;ll&#237;t&#225;s tool</b>-t.</div>';return}
-  if(base==='\u00DCZLETBEN'){o.push({id:'kibontas',l:'Kibontas',d:'Pultba kerul',c:'op2'});o.push({id:'athelyezes',l:'Athelyezes',d:'Masik uzletbe',c:'op6',x:'h'})}
-  if(base==='KIBONTVA'){o.push({id:'elfogyott',l:'Elfogyott',d:'Tub kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos lett',d:'Maradt benne, hutobe',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva/betoltve',c:'op5',cf:1})}
-  if(base==='MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R'){o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Betoltve az ujba',c:'op5',cf:1});o.push({id:'mennyiseg',l:'Mennyiseg modositas',d:'Arany valtozott',c:'op4',x:'m'})}
-  if(base==='ISMERETLEN'){o.push({id:'kibontas',l:'Kibontas',d:'Pultba',c:'op2'});o.push({id:'elfogyott',l:'Elfogyott',d:'Kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos',d:'Maradt benne',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva',c:'op5',cf:1})}
+  if(base==='\u00DCZLETBEN'){o.push({id:'kibontas',ic:'\uD83D\uDCE6',l:'Kibont\u00E1s',d:'Pultba ker\u00FCl',c:'op2'});o.push({id:'athelyezes',ic:'\uD83D\uDD04',l:'\u00C1thelyez\u00E9s',d:'M\u00E1sik \u00FCzletbe',c:'op6',x:'h'})}
+  if(base==='KIBONTVA'){o.push({id:'elfogyott',ic:'\u2705',l:'Elfogyott',d:'Tub ki\u00FCr\u00FClt',c:'op3',cf:1});o.push({id:'toltos',ic:'\u2744\uFE0F',l:'T\u00F6lt\u0151s lett',d:'Maradt benne fagyi, h\u0171t\u0151be',c:'op4',x:'m'});o.push({id:'megsemmisitve',ic:'\u274C',l:'Megsemmis\u00EDtve',d:'Kidobva / bet\u00F6ltve',c:'op5',cf:1})}
+  if(base==='MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R'){o.push({id:'megsemmisitve',ic:'\u274C',l:'Megsemmis\u00EDtve',d:'Bet\u00F6ltve az \u00FAjba',c:'op5',cf:1});o.push({id:'mennyiseg',ic:'\u2696\uFE0F',l:'Mennyis\u00E9g m\u00F3dos\u00EDt\u00E1s',d:'Ar\u00E1ny v\u00E1ltozott',c:'op4',x:'m'})}
+  if(base==='ISMERETLEN'){o.push({id:'kibontas',ic:'\uD83D\uDCE6',l:'Kibont\u00E1s',d:'Pultba',c:'op2'});o.push({id:'elfogyott',ic:'\u2705',l:'Elfogyott',d:'Ki\u00FCr\u00FClt',c:'op3',cf:1});o.push({id:'toltos',ic:'\u2744\uFE0F',l:'T\u00F6lt\u0151s',d:'Maradt benne',c:'op4',x:'m'});o.push({id:'megsemmisitve',ic:'\u274C',l:'Megsemmis\u00EDtve',d:'Kidobva',c:'op5',cf:1})}
 
-  if(!o.length){document.getElementById('ops').innerHTML='<div class="info ir">Nincs elerheto muvelet.</div>';return}
-  document.getElementById('ops').innerHTML=o.map(function(op){return '<button class="op '+op.c+'" onclick="pick(\''+op.id+'\',\''+(op.x||'')+'\','+(op.cf?1:0)+')"><span class="oi">'+op.l.split(' ')[0]+'</span><span class="ot">'+op.l.split(' ').slice(1).join(' ')+'<span class="od">'+op.d+'</span></span></button>'}).join('');
+  if(!o.length){document.getElementById('ops').innerHTML='<div class="info ir">Nincs el\u00E9rhet\u0151 m\u0171velet.</div>';return}
+  document.getElementById('ops').innerHTML=o.map(function(op){return '<button class="op '+op.c+'" onclick="pick(\''+op.id+'\',\''+(op.x||'')+'\','+(op.cf?1:0)+')"><span class="oi">'+op.ic+'</span><span class="ot"><span class="ol">'+op.l+'</span><span class="od">'+op.d+'</span></span></button>'}).join('');
 }
 
 function pick(id,extra,cf){
