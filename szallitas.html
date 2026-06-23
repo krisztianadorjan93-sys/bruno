@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Bruno &#8211; Sz&#225;ll&#237;t&#225;s</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;padding-bottom:100px;}
+.top{background:#141414;border-bottom:1px solid #222;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{font-size:15px;font-weight:700;color:#fff;}.brand span{color:#D0783A;}
+.status{font-size:11px;color:#555;font-family:monospace;}.status.on{color:#D0783A;font-weight:600;}
+.main{max-width:480px;margin:0 auto;padding:16px;}
+.scr{display:none;animation:fi .2s ease;}.scr.a{display:block;}
+@keyframes fi{from{opacity:0;}to{opacity:1;}}
+.big{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;}
+.sub{font-size:12px;color:#555;margin-bottom:18px;line-height:1.6;}
+.card{background:#1a1a1a;border:1px solid #262626;border-radius:10px;padding:16px;margin-bottom:12px;}
+.card-t{font-size:9px;font-weight:600;letter-spacing:2px;color:#444;margin-bottom:12px;font-family:monospace;text-transform:uppercase;}
+.field{margin-bottom:10px;}
+label{display:block;font-size:9px;font-weight:600;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+select,input{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:7px;color:#e0e0e0;padding:10px 11px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+select:focus,input:focus{border-color:#D0783A;}
+input[type=text]{font-family:'DM Mono',monospace;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{width:100%;padding:13px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
+.bo{background:#D0783A;color:#fff;}.bo:hover{background:#B86030;}
+.bg{background:#1a5a1a;color:#6aca6a;border:1px solid #2a7a2a;}.bg:hover{background:#2a7a2a;color:#fff;}
+.bd{background:transparent;color:#555;border:1px solid #262626;}.bd:hover{color:#aaa;border-color:#444;}
+.btn:disabled{background:#1a1a1a!important;color:#333!important;cursor:not-allowed!important;border-color:#1a1a1a!important;}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.store-btn{background:#1a1a1a;border:2px solid #262626;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .15s;}
+.store-btn:hover{border-color:#444;}
+.store-btn.sel{border-color:#D0783A;background:#1f1510;}
+.store-btn .si{font-size:24px;margin-bottom:6px;}
+.store-btn .sn{font-size:14px;font-weight:700;color:#fff;}
+.item-row{display:flex;align-items:center;gap:10px;background:#111;border:1px solid #222;border-radius:8px;padding:10px 12px;margin-bottom:6px;animation:ai .2s ease;}
+@keyframes ai{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.item-num{width:22px;height:22px;border-radius:50%;background:#D0783A;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.item-info{flex:1;}
+.item-name{font-size:13px;font-weight:600;color:#fff;}
+.item-meta{font-size:10px;color:#555;font-family:monospace;margin-top:1px;}
+.item-del{background:none;border:none;color:#444;font-size:16px;cursor:pointer;}.item-del:hover{color:#ff5555;}
+.empty{text-align:center;color:#333;font-size:12px;padding:20px;border:1px dashed #262626;border-radius:8px;line-height:1.8;}
+.header-bar{background:#251a0f;border:1px solid #5a3a1a;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.header-bar .name{font-size:16px;font-weight:700;color:#D0783A;}
+.header-bar .count{font-size:26px;font-weight:700;font-family:monospace;color:#fff;}
+.header-bar .clbl{font-size:9px;color:#666;text-align:right;}
+.close-box{background:#0a2a0a;border:1px solid #1a4a1a;border-radius:10px;padding:14px;margin-bottom:8px;}
+.close-title{font-size:10px;font-weight:700;color:#5a9a5a;margin-bottom:6px;letter-spacing:1px;font-family:monospace;text-transform:uppercase;}
+.close-info{font-size:12px;color:#8aca8a;line-height:1.6;}
+.info{border-radius:7px;padding:10px 12px;margin:10px 0;font-size:11px;line-height:1.6;display:flex;gap:8px;}
+.ig{background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a;}
+.io{background:#2a1a0a;border:1px solid #5a3a1a;color:#caa06a;}
+.ib{background:#0a1a2a;border:1px solid #1a3a5a;color:#6a9aca;}
+/* Summary */
+.sl-doc{background:#fff;color:#1a1a1a;border-radius:10px;overflow:hidden;margin-bottom:14px;font-size:12px;}
+.sl-h{background:#111;color:#fff;padding:12px 14px;display:flex;justify-content:space-between;}
+.sl-brand{font-size:13px;font-weight:800;}.sl-addr{font-size:8px;color:#aaa;margin-top:2px;}
+.sl-num{font-family:monospace;font-size:12px;color:#D0783A;text-align:right;}
+.sl-meta{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:1px solid #eee;}
+.sl-mc{padding:8px 10px;}
+.sl-ml{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:2px;}
+.sl-mv{font-size:12px;font-weight:700;}
+.sl-tbl{width:100%;border-collapse:collapse;font-size:11px;margin:0 12px 12px;width:calc(100% - 24px);}
+.sl-tbl th{background:#f5f5f5;padding:6px 8px;text-align:left;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;border-bottom:2px solid #eee;}
+.sl-tbl td{padding:6px 8px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+.sl-foot{background:#f7f7f7;padding:6px 12px;font-size:8px;color:#999;border-top:1px solid #eee;}
+.toast{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a;padding:10px 20px;border-radius:7px;font-size:12px;font-weight:600;z-index:200;white-space:nowrap;}
+.toast.v{display:block;}
+optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;}
+#qr-reader{border-radius:8px;overflow:hidden;margin-bottom:10px;display:none;}
+.qr-btn{width:100%;padding:12px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;background:#1a2a3a;color:#6a9aca;border:1px solid #1a3a5a;}
+.qr-btn:hover{background:#1a3a5a;color:#fff;}
+.qr-stop-btn{width:100%;padding:10px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;background:#2a1a1a;color:#ca6a6a;border:1px solid #5a1a1a;display:none;}
+.qr-stop-btn:hover{background:#3a1a1a;color:#ff8888;}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">Bruno <span>Sz&#225;ll&#237;t&#225;s</span></div><div class="status" id="hstat">Nem akt&#237;v</div></div>
+<div class="toast" id="toast"></div>
+<div class="main">
+
+<!-- SCREEN 1: &#220;ZLET V&#193;LASZT&#193;S -->
+<div class="scr a" id="s1">
+<div class="big">Melyik &#252;zletbe sz&#225;ll&#237;tasz?</div>
+<div class="sub">V&#225;lassz egyet &#8212; ut&#225;na szkenneled a tubokat &#233;s a v&#233;g&#233;n lez&#225;rod.</div>
+<div class="store-grid">
+<div class="store-btn" onclick="pick(this,'Kolosy')"><div class="si">&#127978;</div><div class="sn">Kolosy</div></div>
+<div class="store-btn" onclick="pick(this,'Holl&#225;n')"><div class="si">&#127978;</div><div class="sn">Holl&#225;n</div></div>
+<div class="store-btn" onclick="pick(this,'J&#243;kai')"><div class="si">&#127978;</div><div class="sn">J&#243;kai</div></div>
+<div class="store-btn" onclick="pick(this,'Szeged')"><div class="si">&#127978;</div><div class="sn">Szeged</div></div>
+</div>
+<button class="btn bo" id="startBtn" onclick="start()" disabled>Sz&#225;ll&#237;t&#225;s ind&#237;t&#225;sa &#8594;</button>
+</div>
+
+<!-- SCREEN 2: AKT&#205;V SZ&#193;LL&#205;T&#193;S -->
+<div class="scr" id="s2">
+<div class="header-bar">
+<div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Akt&#237;v sz&#225;ll&#237;t&#225;s</div><div class="name" id="activeName">&#8211;</div></div>
+<div style="text-align:right;"><div class="count" id="activeCount">0</div><div class="clbl">tub</div></div>
+</div>
+<div class="card">
+<div class="card-t">T&#233;tel hozz&#225;ad&#225;sa &#8212; szkennel&#233;ssel vagy k&#233;zzel</div>
+<button class="qr-btn" id="qrStartBtn" onclick="startQRScan()">&#128247; QR Szkennel&#233;s</button>
+<input type="file" id="qrFile" accept="image/*" capture="environment" style="display:none" onchange="scanPhoto(this)">
+<div id="qr-reader" style="display:none;margin-bottom:10px"></div>
+<button class="qr-stop-btn" id="qrStopBtn" onclick="stopCam()">&#10005; Kamera bez&#225;r&#225;s</button>
+<div class="field"><label>&#205;z neve</label>
+<select id="aF">
+<option value="">&#8211; V&#225;lassz &#8211;</option>
+<optgroup label="Tejsz&#237;nes"><option>Fior di latte</option><option>Amarena</option><option>Stracciatella</option><option>Cremino</option><option>Fiori di coco</option><option>Fiori di bacio</option><option>Fiori di pistacchio</option><option>Super yoghurt</option><option>Yoghurt maracuja</option><option>Yoghurt levendula</option><option>Keksz</option><option>Vanilia</option><option>Tiramisu</option><option>Zabaione</option><option>Crema di limone</option><option>Sos caramel</option><option>Pisztacia</option><option>Pisztacia extra</option><option>Mogyoro</option><option>Bacio</option><option>Bacio extra</option><option>Csoki</option><option>&#201;tcsoki</option><option>Raffaello</option><option>Torroncino</option><option>Zuppa inglese</option><option>Kave</option><option>Ferrero</option><option>Cremino nero</option><option>Fah&#233;j</option><option>Bacio perugino</option><option>Cantuccio Fiorentino</option></optgroup>
+<optgroup label="Sorbetek"><option>Citrom</option><option>Mango</option><option>Eper</option><option>Malna</option><option>Bergamotto</option><option>Afonya</option><option>Ananas</option><option>Mandarin</option><option>S&#225;rgadinnye</option><option>Agrumi di sicilia</option><option>Gorogdinnye</option><option>Erdei gy&#252;m&#246;lcs</option></optgroup>
+<optgroup label="Granita"><option>Eper Granita</option><option>Portofino Granita</option><option>Citrom Granita</option><option>Mango Granita</option><option>Agrumi Granita</option><option>Sargadinnye Granita</option><option>Maggio Granita</option><option>Kave Granita</option><option>Mandula Granita</option><option>Pisztacia Granita</option><option>Gorogdinnye Granita</option></optgroup>
+</select></div>
+<div class="r2">
+<div class="field"><label>Gy&#225;rt&#225;si sz&#225;m</label><input type="text" id="aB" placeholder="20260613-01" autocomplete="off"></div>
+<div class="field"><label>S&#250;ly (g)</label><input type="number" id="aW" placeholder="5200" min="1"></div>
+</div>
+<button class="btn bo" onclick="addItem()">+ Hozz&#225;ad&#225;s</button>
+</div>
+<div class="card">
+<div class="card-t">Sz&#225;ll&#237;tm&#225;ny tartalma</div>
+<div id="itemList"><div class="empty">M&#233;g nincs t&#233;tel.<br>Szkenneld be vagy add hozz&#225; a fagyikat.</div></div>
+</div>
+<div class="close-box">
+<div class="close-title">&#9989; Minden tub hozz&#225;adva?</div>
+<div class="close-info">Lez&#225;r&#225;skor automatikusan:<br>&#8226; Konyha lelt&#225;r cs&#246;kken<br>&#8226; &#220;zlet lelt&#225;r n&#337;<br>&#8226; Sz&#225;ll&#237;t&#243;lev&#233;l gener&#225;l&#243;dik<br>&#8226; Mozg&#225;s log r&#246;gz&#252;l</div>
+</div>
+<button class="btn bg" id="closeBtn" onclick="closeDelivery()" disabled>Sz&#225;ll&#237;t&#225;s lez&#225;r&#225;sa &#8594; Sz&#225;ll&#237;t&#243;lev&#233;l gener&#225;l&#225;s</button>
+<button class="btn bd" onclick="cancelDel()" style="margin-top:6px;">&#10005; M&#233;gsem</button>
+</div>
+
+<!-- SCREEN 3: SZ&#193;LL&#205;T&#211;LEV&#201;L -->
+<div class="scr" id="s3">
+<div class="big" style="margin-bottom:14px;">Sz&#225;ll&#237;t&#243;lev&#233;l k&#233;sz &#9989;</div>
+<div id="slDoc"></div>
+<button class="btn bo" onclick="printSL()">&#128424;&#65039; Nyomtat&#225;s / PDF</button>
+<div class="info ig" style="margin-top:10px;">&#9989; Konyha lelt&#225;r friss&#237;tve. &#220;zlet lelt&#225;r friss&#237;tve. Mozg&#225;s log r&#246;gz&#237;tve.</div>
+<button class="btn bd" onclick="newDel()" style="margin-top:8px;">&#8617; &#218;j sz&#225;ll&#237;t&#225;s</button>
+</div>
+
+</div>
+<script>
+var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
+var FORM_BASE='https://docs.google.com/forms/d/e/1FAIpQLSfQ5PvTFHi4We7fDQNwqUjMFPhv46c2NOqRcAVMYuzHR8HgwQ/viewform';
+var ENTRY_UZLET='entry.461433288',ENTRY_IZ='entry.1429792248',ENTRY_BATCH='entry.2015076910',ENTRY_SULY='entry.2000996021';
+var store='',items=[],slSeq=1,gsrWorks=false;
+function p2(n){return String(n).padStart(2,'0');}
+function dk(){var d=new Date();return ''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());}
+function dd(){var d=new Date();return d.getFullYear()+'.'+p2(d.getMonth()+1)+'.'+p2(d.getDate());}
+function slN(){return 'SZ-'+dk()+'-'+p2(slSeq);}
+function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('a');});document.getElementById(id).classList.add('a');window.scrollTo(0,0);}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('v');setTimeout(function(){t.classList.remove('v');},2200);}
+
+function pick(el,s){document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');store=s;document.getElementById('startBtn').disabled=false;}
+function start(){if(!store)return;items=[];document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();show('s2');}
+
+function addItem(){
+  var f=document.getElementById('aF').value,b=document.getElementById('aB').value.trim(),w=document.getElementById('aW').value;
+  if(!f||!b||!w){toast('Toltsd ki az osszes mezot!');return;}
+  items.push({f:f,b:b,w:w});
+  document.getElementById('aF').value='';document.getElementById('aB').value='';document.getElementById('aW').value='';
+  document.getElementById('activeCount').textContent=items.length;
+  document.getElementById('closeBtn').disabled=false;
+  renderItems();toast(f+' hozzaadva');
+}
+function removeItem(i){items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();}
+function renderItems(){
+  var el=document.getElementById('itemList');
+  if(items.length===0){el.innerHTML='<div class="empty">Meg nincs tetel.<br>Szkenneld be vagy add hozza a fagyikat.</div>';return;}
+  el.innerHTML=items.map(function(it,i){
+    return '<div class="item-row"><div class="item-num">'+(i+1)+'</div><div class="item-info"><div class="item-name">'+it.f+'</div><div class="item-meta">'+it.b+' | '+it.w+'g</div></div><button class="item-del" onclick="removeItem('+i+')">\u2715</button></div>';
+  }).join('');
+}
+
+function closeDelivery(){
+  if(items.length===0)return;
+  var sn=slN();
+  var payload={store:store,slNum:sn,items:items.map(function(it){return{flavor:it.f,batch:it.b,weight:it.w};})};
+  if(gsrWorks){
+    try{
+      google.script.run
+        .withSuccessHandler(function(r){toast('Szerver OK: mentve + email!');})
+        .withFailureHandler(function(e){toast('GSR hiba: '+(e.message||e));})
+        .gsProcessDelivery(payload);
+    }catch(ex){toast('GSR exception: '+ex.message);fetchSend(payload);}
+  } else {
+    fetchSend(payload);
+  }
+  buildSLDoc(sn);
+  document.getElementById('hstat').textContent='Lezarva: '+sn;
+  document.getElementById('hstat').classList.remove('on');
+  slSeq++;
+  show('s3');
+}
+function fetchSend(payload){
+  payload.action='szallitas_lezaras';
+  fetch(DEPLOY_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(){toast('Fetch elkuldve');}).catch(function(e){toast('Fetch hiba: '+e);});
+}
+
+function buildSLDoc(sn){
+  var today=dd();
+  var rows=items.map(function(it,i){
+    return '<tr><td style="color:#888;">'+( i+1)+'</td><td style="font-weight:700;">'+it.f+'</td><td style="font-family:monospace;font-size:10px;color:#555;">'+it.b+'</td><td>'+it.w+'g</td><td id="qr-sl-'+i+'"></td></tr>';
+  }).join('');
+  document.getElementById('slDoc').innerHTML='<div class="sl-doc">'
+    +'<div class="sl-h"><div><div class="sl-brand">IL BRUNO ITALIANO KFT.</div><div class="sl-addr">1036 Budapest, Lajos utca 70-72.</div></div><div class="sl-num">'+sn+'</div></div>'
+    +'<div class="sl-meta"><div class="sl-mc"><div class="sl-ml">D\u00E1tum</div><div class="sl-mv">'+today+'</div></div><div class="sl-mc"><div class="sl-ml">Felad\u00F3</div><div class="sl-mv">Konyha</div></div><div class="sl-mc"><div class="sl-ml">\u00C1tvev\u0151</div><div class="sl-mv">'+store+'</div></div><div class="sl-mc"><div class="sl-ml">Tub</div><div class="sl-mv">'+items.length+' db</div></div></div>'
+    +'<table class="sl-tbl"><thead><tr><th>#</th><th>\u00CDz</th><th>Gy\u00E1rt\u00E1si sz.</th><th>S\u00FAly</th><th>QR</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="sl-foot">'+sn+' | '+today+' | IL Bruno Italiano Kft.</div></div>';
+  // Generate QR codes for each item
+  items.forEach(function(it,i){
+    setTimeout(function(){
+      var el=document.getElementById('qr-sl-'+i);if(!el)return;
+      var url=FORM_BASE+'?usp=pp_url&'+ENTRY_UZLET+'='+encodeURIComponent(store)+'&'+ENTRY_IZ+'='+encodeURIComponent(it.f)+'&'+ENTRY_BATCH+'='+encodeURIComponent(it.b)+'&'+ENTRY_SULY+'='+encodeURIComponent(it.w);
+      try{new QRCode(el,{text:url,width:48,height:48,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});}catch(e){}
+    },150);
+  });
+}
+
+function printSL(){
+  var sn=document.querySelector('.sl-num')?document.querySelector('.sl-num').textContent:'';
+  var today=dd();
+  // Generate QR images for print
+  var promises=items.map(function(it){
+    return new Promise(function(resolve){
+      var url=FORM_BASE+'?usp=pp_url&'+ENTRY_UZLET+'='+encodeURIComponent(store)+'&'+ENTRY_IZ+'='+encodeURIComponent(it.f)+'&'+ENTRY_BATCH+'='+encodeURIComponent(it.b)+'&'+ENTRY_SULY+'='+encodeURIComponent(it.w);
+      var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;';document.body.appendChild(tmp);
+      try{
+        new QRCode(tmp,{text:url,width:100,height:100,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+        setTimeout(function(){var c=tmp.querySelector('canvas');var du=c?c.toDataURL():'';document.body.removeChild(tmp);resolve({it:it,qr:du});},200);
+      }catch(e){document.body.removeChild(tmp);resolve({it:it,qr:''});}
+    });
+  });
+  Promise.all(promises).then(function(results){
+    var rows='';results.forEach(function(r,i){
+      rows+='<tr><td style="padding:8px;color:#888;">'+( i+1)+'</td><td style="padding:8px;font-weight:700;font-size:13px;">'+r.it.f+'</td><td style="padding:8px;font-family:monospace;font-size:11px;color:#333;">'+r.it.b+'</td><td style="padding:8px;">'+r.it.w+'g</td><td style="padding:8px;">'+(r.qr?'<img src="'+r.qr+'" width="90" height="90" style="display:block;border-radius:3px;">':'')+'</td></tr>';
+    });
+    var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;padding:8mm;}h1{font-size:16px;margin-bottom:4px;}.addr{font-size:9px;color:#888;margin-bottom:12px;}.num{font-family:monospace;font-size:18px;font-weight:700;color:#D0783A;float:right;}.meta{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border:1px solid #eee;border-radius:4px;margin-bottom:14px;}.mc{padding:8px 10px;}.ml{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:2px;}.mv{font-size:12px;font-weight:700;}table{width:100%;border-collapse:collapse;margin-bottom:14px;}th{background:#f5f5f5;padding:8px;text-align:left;font-size:9px;text-transform:uppercase;color:#888;border-bottom:2px solid #eee;}td{border-bottom:1px solid #f5f5f5;vertical-align:middle;}tr:last-child td{border-bottom:none;}.signs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;padding-top:16px;border-top:1px solid #eee;}.sl{font-size:9px;text-transform:uppercase;color:#aaa;margin-bottom:20px;}.sline{border-top:1px solid #ccc;padding-top:4px;font-size:8px;color:#bbb;}.foot{margin-top:14px;padding-top:8px;border-top:1px solid #f0f0f0;font-size:8px;color:#aaa;display:flex;justify-content:space-between;}@media print{@page{margin:8mm;size:A4;}}</style></head><body>'
+      +'<div class="num">'+sn+'</div><h1>IL BRUNO ITALIANO KFT.</h1><div class="addr">1036 Budapest, Lajos utca 70-72. \u2014 SZ\u00C1LL\u00CDT\u00D3LEV\u00C9L</div>'
+      +'<div class="meta"><div class="mc"><div class="ml">D\u00E1tum</div><div class="mv">'+today+'</div></div><div class="mc"><div class="ml">Felad\u00F3</div><div class="mv">Konyha</div></div><div class="mc"><div class="ml">\u00C1tvev\u0151</div><div class="mv">'+store+'</div></div><div class="mc"><div class="ml">Tub</div><div class="mv">'+items.length+' db</div></div></div>'
+      +'<table><thead><tr><th>#</th><th>\u00CDz neve</th><th>Gy\u00E1rt\u00E1si sz\u00E1m</th><th>S\u00FAly</th><th>QR \u2014 kibont\u00E1skor szkennel</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="signs"><div><div class="sl">\u00C1tad\u00F3 (Konyha)</div><div class="sline">Al\u00E1\u00EDr\u00E1s</div></div><div><div class="sl">\u00C1tvev\u0151 ('+store+')</div><div class="sline">Al\u00E1\u00EDr\u00E1s</div></div></div>'
+      +'<div class="foot"><span>'+sn+' | '+today+'</span><span>IL Bruno Italiano Kft.</span></div>'
+      +'<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>';
+    var w=window.open('','_blank','width=750,height=950');
+    if(w){w.document.write(h);w.document.close();}else{alert('Engedelyezd a felugro ablakokat!');}
+  });
+}
+
+var qrInst=null,camActive=false;
+function startQRScan(){
+  if(!qrInst)qrInst=new Html5Qrcode('qr-reader');
+  var el=document.getElementById('qr-reader');
+  var sb=document.getElementById('qrStopBtn');
+  el.style.display='block';sb.style.display='block';
+  qrInst.start({facingMode:'environment'},{fps:15,qrbox:{width:250,height:250}},
+    function(text){stopCam();parseScannedQR(text);toast('QR beolvasva!');},
+    function(){}
+  ).then(function(){camActive=true;}).catch(function(){
+    el.style.display='none';sb.style.display='none';
+    document.getElementById('qrFile').click();
+  });
+}
+function stopCam(){
+  var el=document.getElementById('qr-reader');var sb=document.getElementById('qrStopBtn');
+  if(qrInst&&camActive){qrInst.stop().then(function(){camActive=false;el.style.display='none';sb.style.display='none';}).catch(function(){camActive=false;el.style.display='none';sb.style.display='none';});}
+  else{el.style.display='none';sb.style.display='none';}
+}
+function scanPhoto(inp){
+  if(!inp.files||!inp.files[0])return;
+  var file=inp.files[0];
+  toast('Feldolgozas...');
+  if(!qrInst)qrInst=new Html5Qrcode('qr-reader');
+  qrInst.scanFile(file,false).then(function(text){parseScannedQR(text);toast('QR beolvasva!');}).catch(function(){toast('Nem sikerult beolvasni. Probald jobb megvilagitassal vagy ird be kezzel!');});
+  inp.value='';
+}
+
+function parseScannedQR(url){
+  try{
+    var params=new URL(url).searchParams;
+    var flavor=decodeURIComponent(params.get(ENTRY_IZ)||'');
+    var batch=decodeURIComponent(params.get(ENTRY_BATCH)||'');
+    var weight=decodeURIComponent(params.get(ENTRY_SULY)||'');
+    if(flavor){
+      var sel=document.getElementById('aF');
+      for(var i=0;i<sel.options.length;i++){
+        if(sel.options[i].text===flavor){sel.selectedIndex=i;break;}
+      }
+    }
+    if(batch)document.getElementById('aB').value=batch;
+    if(weight)document.getElementById('aW').value=weight;
+    toast('QR beolvasva: '+flavor);
+  }catch(e){
+    toast('Ervenytelen QR kod');
+  }
+}
+
+function cancelDel(){if(!confirm('Torlod a szallitast?'))return;newDel();}
+function newDel(){items=[];store='';document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});document.getElementById('startBtn').disabled=true;document.getElementById('hstat').textContent='Nem aktiv';document.getElementById('hstat').classList.remove('on');show('s1');}
+
+// Kapcsolat teszt betolteskor
+try{
+  if(typeof google!=='undefined'&&google.script&&google.script.run){
+    google.script.run
+      .withSuccessHandler(function(r){gsrWorks=true;document.getElementById('hstat').textContent='Kapcsolodva (GSR)';})
+      .withFailureHandler(function(){document.getElementById('hstat').textContent='GSR hiba - fetch mod';})
+      .gsTest();
+  } else {document.getElementById('hstat').textContent='Nincs GSR - fetch mod';}
+}catch(e){document.getElementById('hstat').textContent='Hiba: '+e.message;}
+</script>
+</body>
+</html>

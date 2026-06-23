@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Bruno &#8211; Rendel&#233;s</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;padding-bottom:110px;}
+.top{background:#141414;border-bottom:1px solid #222;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{font-size:15px;font-weight:700;color:#fff;}.brand span{color:#D0783A;}
+.tag{font-size:10px;color:#555;font-family:monospace;}
+.tag.on{color:#D0783A;font-weight:600;}
+.main{max-width:520px;margin:0 auto;padding:16px;}
+.section{margin-bottom:14px;}
+.st{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:10px;font-family:monospace;}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.store-btn{background:#1a1a1a;border:2px solid #262626;border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .15s;}
+.store-btn:hover{border-color:#444;}.store-btn.a{border-color:#D0783A;background:#1f1510;}
+.store-btn .icon{font-size:20px;margin-bottom:4px;}.store-btn .name{font-size:13px;font-weight:700;color:#fff;}
+.day-grid{display:flex;gap:6px;flex-wrap:wrap;}
+.day-btn{background:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;color:#666;cursor:pointer;}
+.day-btn:hover{border-color:#444;}.day-btn.a{border-color:#D0783A;background:#1f1510;color:#D0783A;}
+.search{width:100%;background:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:10px 12px;color:#ccc;font-size:14px;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.search:focus{border-color:#D0783A;}
+.cat-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px;}
+.cat-hdr:hover{background:#1a1a1a;}
+.cat-hdr.ck{background:#0a1a0a;border:1px solid #1a3a1a;}
+.cat-hdr.so{background:#1a0a0a;border:1px solid #3a1a1a;}
+.cat-hdr.gr{background:#0a0a1a;border:1px solid #1a1a3a;}
+.cat-name{font-size:13px;font-weight:700;color:#fff;}.cat-count{font-size:11px;color:#D0783A;font-family:monospace;font-weight:700;}
+.cat-items{padding:2px 0;display:none;}.cat-items.open{display:block;}
+.item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #151515;}
+.item:last-child{border-bottom:none;}
+.item-name{flex:1;font-size:13px;font-weight:500;color:#ccc;}
+.item-c{display:flex;align-items:center;background:#1a1a1a;border:1px solid #262626;border-radius:7px;overflow:hidden;}
+.item-b{width:34px;height:34px;border:none;background:transparent;color:#888;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.item-b:hover{background:#262626;color:#fff;}
+.item-q{width:34px;text-align:center;font-size:14px;font-weight:700;font-family:monospace;color:#fff;background:transparent;border:none;outline:none;}
+.item-q.has{color:#D0783A;}
+.item.has-qty{background:#140d05;border-radius:6px;margin:2px 0;}
+.notes{width:100%;background:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:10px 12px;color:#ccc;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;min-height:50px;outline:none;}
+.notes:focus{border-color:#D0783A;}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#141414;border-top:1px solid #262626;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:100;}
+.b-total{font-size:22px;font-weight:700;color:#D0783A;font-family:monospace;}
+.b-label{font-size:10px;color:#555;margin-top:1px;}
+.b-btn{background:#D0783A;color:#fff;border:none;border-radius:10px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.b-btn:hover{background:#B86030;}.b-btn:disabled{background:#262626;color:#444;cursor:not-allowed;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.overlay.s{display:flex;}
+.confirm{background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:20px;max-width:380px;width:100%;max-height:80vh;overflow-y:auto;}
+.confirm-t{font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;}
+.confirm-r{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #222;font-size:12px;}
+.confirm-r:last-of-type{border:none;}
+.confirm-q{font-weight:700;color:#D0783A;font-family:monospace;}
+.confirm-btns{display:flex;gap:10px;margin-top:14px;}
+.confirm-btns button{flex:1;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;}
+.cb-y{background:#D0783A;color:#fff;}.cb-n{background:#262626;color:#888;}
+.success{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:200;align-items:center;justify-content:center;text-align:center;padding:20px;flex-direction:column;}
+.success.s{display:flex;}
+.success-i{font-size:56px;margin-bottom:14px;}.success-t{font-size:20px;font-weight:700;color:#5DCAA5;margin-bottom:6px;}
+.success-s{font-size:13px;color:#666;line-height:1.7;margin-bottom:20px;}
+.s-btn{background:#1a1a1a;border:1px solid #333;color:#ccc;padding:12px 24px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.loading{text-align:center;padding:30px;color:#555;font-size:13px;}
+.loading-spin{display:inline-block;width:20px;height:20px;border:2px solid #333;border-top:2px solid #D0783A;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:7px;font-size:12px;font-weight:600;z-index:300;white-space:nowrap;}
+.toast.v{display:block;}.toast-ok{background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a;}.toast-err{background:#2a0a0a;border:1px solid #5a1a1a;color:#ff8888;}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">Bruno <span>Rendel&#233;s</span></div><div class="tag" id="storeTag">V&#225;lassz &#252;zletet</div></div>
+<div class="toast toast-ok" id="toast"></div>
+<div class="overlay" id="confirmO"><div class="confirm"><div class="confirm-t">Rendel&#233;s &#246;sszes&#237;t&#337;</div><div id="cStore" style="font-size:11px;color:#666;margin-bottom:10px;"></div><div id="cItems"></div><div id="cNotes" style="font-size:10px;color:#555;margin-top:8px;display:none;"></div><div class="confirm-btns"><button class="cb-n" onclick="closeC()">M&#233;gsem</button><button class="cb-y" onclick="submit()">Rendel&#233;s k&#252;ld&#233;se &#10003;</button></div></div></div>
+<div class="success" id="successS"><div class="success-i">&#9989;</div><div class="success-t">Rendel&#233;s elk&#252;ldve!</div><div class="success-s" id="successInfo"></div><button class="s-btn" onclick="reset()">&#8617; &#218;j rendel&#233;s</button></div>
+<div class="main">
+<div class="section"><div class="st">Melyik &#252;zlet rendel?</div>
+<div class="store-grid">
+<div class="store-btn" onclick="pickStore(this,'Kolosy')"><div class="icon">&#127978;</div><div class="name">Kolosy</div></div>
+<div class="store-btn" onclick="pickStore(this,'Holl&#225;n')"><div class="icon">&#127978;</div><div class="name">Holl&#225;n</div></div>
+<div class="store-btn" onclick="pickStore(this,'J&#243;kai')"><div class="icon">&#127978;</div><div class="name">J&#243;kai</div></div>
+<div class="store-btn" onclick="pickStore(this,'Szeged')"><div class="icon">&#127978;</div><div class="name">Szeged</div></div>
+</div></div>
+<div class="section"><div class="st">Sz&#225;ll&#237;t&#225;si nap</div>
+<div class="day-grid">
+<div class="day-btn" onclick="pickDay(this,'H&#233;tf&#337;')">H&#233;tf&#337;</div>
+<div class="day-btn" onclick="pickDay(this,'Kedd')">Kedd</div>
+<div class="day-btn" onclick="pickDay(this,'Szerda')">Szerda</div>
+<div class="day-btn" onclick="pickDay(this,'Cs&#252;t&#246;rt&#246;k')">Cs&#252;t&#246;rt&#246;k</div>
+<div class="day-btn" onclick="pickDay(this,'P&#233;ntek')">P&#233;ntek</div>
+<div class="day-btn" onclick="pickDay(this,'Szombat')">Szombat</div>
+<div class="day-btn" onclick="pickDay(this,'Vas&#225;rnap')">Vas&#225;rnap</div>
+</div></div>
+<input class="search" id="searchInput" type="text" placeholder="&#128269; Keres&#233;s &#237;zre..." oninput="filterFlavors()">
+<div id="flavorList"><div class="loading"><div class="loading-spin"></div><br>V&#225;lassz &#252;zletet az &#237;zek bet&#246;lt&#233;s&#233;hez</div></div>
+<div class="section" style="margin-top:14px;"><div class="st">Megjegyz&#233;s (opcion&#225;lis)</div><textarea class="notes" id="notesField" placeholder="Pl.: k&#233;rn&#233;nk extra citromot ha van..."></textarea></div>
+</div>
+<div class="bottom"><div style="flex:1;"><div class="b-total" id="totalCount">0</div><div class="b-label">tub rendelve</div></div><button class="b-btn" id="submitBtn" onclick="showC()" disabled>Rendel&#233;s &#8594;</button></div>
+
+<script>
+var selectedStore='',selectedDay='',order={},allFlavors={},loadedFlavors=[],gsrWorks=false;
+var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
+
+// \u00CDzek bet\u00F6lt\u00E9se a Sheet-b\u0151l
+function loadFlavors(){
+  document.getElementById('flavorList').innerHTML='<div class="loading"><div class="loading-spin"></div><br>\u00CDzek bet\u00F6lt\u00E9se...</div>';
+  function onFlavors(data){
+    if(!data||data.error){useFallback();return;}
+    allFlavors=data;
+    if(selectedStore&&allFlavors[selectedStore]){
+      loadedFlavors=allFlavors[selectedStore];
+      renderFlavors();
+    } else {
+      document.getElementById('flavorList').innerHTML='<div class="loading">\u2190 V\u00E1lassz \u00FCzletet az \u00EDzek megjelen\u00EDt\u00E9s\u00E9hez</div>';
+    }
+  }
+  if(gsrWorks){
+    try{
+      google.script.run
+        .withSuccessHandler(onFlavors)
+        .withFailureHandler(function(){fetchLoadFlavors();})
+        .gsGetActiveFlavors();
+    }catch(e){fetchLoadFlavors();}
+  } else {fetchLoadFlavors();}
+}
+function fetchLoadFlavors(){
+  fetch(DEPLOY_URL).then(function(r){return r.json();}).then(function(data){
+    if(!data||data.error){useFallback();return;}
+    allFlavors=data;
+    if(selectedStore&&allFlavors[selectedStore]){loadedFlavors=allFlavors[selectedStore];renderFlavors();}
+    else{document.getElementById('flavorList').innerHTML='<div class="loading">\u2190 V\u00E1lassz \u00FCzletet</div>';}
+  }).catch(function(){useFallback();});
+}
+
+// Fallback ha nincs net vagy hiba
+function useFallback(){
+  var fb=[
+    {name:'Fior di latte',cat:'Tejsz\u00EDnes'},{name:'Amarena',cat:'Tejsz\u00EDnes'},{name:'Stracciatella',cat:'Tejsz\u00EDnes'},
+    {name:'Cremino',cat:'Tejsz\u00EDnes'},{name:'Fiori di coco',cat:'Tejsz\u00EDnes'},{name:'Fiori di bacio',cat:'Tejsz\u00EDnes'},
+    {name:'Fiori di pistacchio',cat:'Tejsz\u00EDnes'},{name:'Super yoghurt',cat:'Tejsz\u00EDnes'},{name:'Yoghurt maracuja',cat:'Tejsz\u00EDnes'},
+    {name:'Yoghurt levendula',cat:'Tejsz\u00EDnes'},{name:'Keksz',cat:'Tejsz\u00EDnes'},{name:'Vanilia',cat:'Tejsz\u00EDnes'},
+    {name:'Tiramisu',cat:'Tejsz\u00EDnes'},{name:'Zabaione',cat:'Tejsz\u00EDnes'},{name:'Crema di limone',cat:'Tejsz\u00EDnes'},
+    {name:'Sos caramel',cat:'Tejsz\u00EDnes'},{name:'Pisztacia',cat:'Tejsz\u00EDnes'},{name:'Pisztacia extra',cat:'Tejsz\u00EDnes'},
+    {name:'Mogyoro',cat:'Tejsz\u00EDnes'},{name:'Bacio',cat:'Tejsz\u00EDnes'},{name:'Bacio extra',cat:'Tejsz\u00EDnes'},
+    {name:'Csoki',cat:'Tejsz\u00EDnes'},{name:'\u00C9tcsoki',cat:'Tejsz\u00EDnes'},{name:'Raffaello',cat:'Tejsz\u00EDnes'},
+    {name:'Torroncino',cat:'Tejsz\u00EDnes'},{name:'Zuppa inglese',cat:'Tejsz\u00EDnes'},{name:'Kave',cat:'Tejsz\u00EDnes'},
+    {name:'Ferrero',cat:'Tejsz\u00EDnes'},{name:'Cremino nero',cat:'Tejsz\u00EDnes'},{name:'Fah\u00E9j',cat:'Tejsz\u00EDnes'},
+    {name:'Bacio perugino',cat:'Tejsz\u00EDnes'},{name:'Cantuccio Fiorentino',cat:'Tejsz\u00EDnes'},
+    {name:'Citrom',cat:'Sorbet'},{name:'Mango',cat:'Sorbet'},{name:'Eper',cat:'Sorbet'},{name:'Malna',cat:'Sorbet'},
+    {name:'Bergamotto',cat:'Sorbet'},{name:'Afonya',cat:'Sorbet'},{name:'Ananas',cat:'Sorbet'},
+    {name:'Mandarin',cat:'Sorbet'},{name:'S\u00E1rgadinnye',cat:'Sorbet'},{name:'Agrumi di sicilia',cat:'Sorbet'},
+    {name:'Gorogdinnye',cat:'Sorbet'},{name:'Erdei gy\u00FCm\u00F6lcs',cat:'Sorbet'},
+    {name:'Eper Granita',cat:'Granita'},{name:'Portofino Granita',cat:'Granita'},{name:'Citrom Granita',cat:'Granita'},
+    {name:'Mango Granita',cat:'Granita'},{name:'Agrumi Granita',cat:'Granita'},{name:'Sargadinnye Granita',cat:'Granita'},
+    {name:'Maggio Granita',cat:'Granita'},{name:'Kave Granita',cat:'Granita'},{name:'Mandula Granita',cat:'Granita'},
+    {name:'Pisztacia Granita',cat:'Granita'},{name:'Gorogdinnye Granita',cat:'Granita'}
+  ];
+  allFlavors={'Kolosy':fb,'Holl\u00E1n':fb,'J\u00F3kai':fb,'Szeged':fb};
+  if(selectedStore)loadedFlavors=fb;
+  renderFlavors();
+  toast('Offline mod - osszes iz mutatva','err');
+}
+
+function renderFlavors(filter){
+  filter=(filter||'').toLowerCase();
+  var cats={};
+  loadedFlavors.forEach(function(f){
+    if(filter&&f.name.toLowerCase().indexOf(filter)===-1)return;
+    if(!cats[f.cat])cats[f.cat]=[];
+    cats[f.cat].push(f.name);
+  });
+  var catOrder=Object.keys(cats);
+  var catClsMap={'ck':['tejsz','cream','gelato'],'so':['sorb','gy\u00FCm\u00F6lcs','fruit'],'gr':['gran']};
+  function getCls(cat){var cl=cat.toLowerCase();for(var k in catClsMap){for(var i=0;i<catClsMap[k].length;i++){if(cl.indexOf(catClsMap[k][i])!==-1)return k;}}return 'ck';}
+  var catCls={};catOrder.forEach(function(c){catCls[c]=getCls(c);});
+  var h='';
+  catOrder.forEach(function(cat){
+    var items=cats[cat];if(!items||!items.length)return;
+    var catTotal=0;items.forEach(function(f){catTotal+=(order[f]||0);});
+    h+='<div class="cat-hdr '+catCls[cat]+'" onclick="toggleCat(this)"><div class="cat-name">'+cat+'</div>'+(catTotal>0?'<div class="cat-count">'+catTotal+' db</div>':'')+'</div>';
+    h+='<div class="cat-items open">';
+    items.forEach(function(f){
+      var q=order[f]||0;
+      h+='<div class="item'+(q>0?' has-qty':'')+'"><div class="item-name">'+f+'</div><div class="item-c">'
+        +'<button class="item-b" onclick="chg(\''+f.replace(/'/g,"\\'")+'\', -1)">\u2212</button>'
+        +'<div class="item-q'+(q>0?' has':'')+'">'+q+'</div>'
+        +'<button class="item-b" onclick="chg(\''+f.replace(/'/g,"\\'")+'\', 1)">+</button>'
+        +'</div></div>';
+    });
+    h+='</div>';
+  });
+  if(!h)h='<div class="loading">Nincs tal\u00E1lat</div>';
+  document.getElementById('flavorList').innerHTML=h;
+}
+
+function toggleCat(el){var items=el.nextElementSibling;if(items)items.classList.toggle('open');}
+function chg(f,d){var c=order[f]||0;var n=Math.max(0,Math.min(99,c+d));if(n===0)delete order[f];else order[f]=n;upd();renderFlavors(document.getElementById('searchInput').value);}
+function filterFlavors(){renderFlavors(document.getElementById('searchInput').value);}
+function upd(){var t=0;Object.keys(order).forEach(function(f){t+=order[f];});document.getElementById('totalCount').textContent=t;document.getElementById('submitBtn').disabled=!(t>0&&selectedStore&&selectedDay);}
+
+function pickStore(el,s){
+  document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('a');});
+  el.classList.add('a');selectedStore=s;
+  document.getElementById('storeTag').textContent=s;document.getElementById('storeTag').classList.add('on');
+  order={}; // Rendel\u00E9s t\u00F6rl\u00E9se \u00FCzletv\u00E1lt\u00E1skor
+  if(allFlavors[s]){loadedFlavors=allFlavors[s];renderFlavors();}
+  else{loadFlavors();}
+  upd();
+}
+function pickDay(el,d){document.querySelectorAll('.day-btn').forEach(function(b){b.classList.remove('a');});el.classList.add('a');selectedDay=d;upd();}
+
+function showC(){
+  if(!selectedStore||!selectedDay)return;
+  var t=0;Object.keys(order).forEach(function(f){t+=order[f];});if(t===0)return;
+  document.getElementById('cStore').textContent=selectedStore+' > '+selectedDay+'i szallitas';
+  var h='';Object.keys(order).forEach(function(f){h+='<div class="confirm-r"><span>'+f+'</span><span class="confirm-q">'+order[f]+' db</span></div>';});
+  h+='<div class="confirm-r" style="font-weight:700;border-top:2px solid #333;padding-top:8px;margin-top:4px;"><span>\u00D6sszesen</span><span class="confirm-q">'+t+' db</span></div>';
+  document.getElementById('cItems').innerHTML=h;
+  var notes=document.getElementById('notesField').value.trim();
+  var nd=document.getElementById('cNotes');if(notes){nd.textContent='Megjegyz\u00E9s: '+notes;nd.style.display='block';}else nd.style.display='none';
+  document.getElementById('confirmO').classList.add('s');
+}
+function closeC(){document.getElementById('confirmO').classList.remove('s');}
+
+function submit(){
+  closeC();
+  var notes=document.getElementById('notesField').value.trim();
+  var items=[];Object.keys(order).forEach(function(f){items.push({flavor:f,qty:order[f]});});
+  var payload={action:'rendeles',store:selectedStore,day:selectedDay,date:new Date().toISOString().split('T')[0],notes:notes,items:items};
+  if(gsrWorks){
+    try{
+      google.script.run
+        .withSuccessHandler(function(r){toast('Rendeles mentve!','ok');})
+        .withFailureHandler(function(e){toast('GSR hiba: '+(e.message||e),'err');fetchRendeles(payload);})
+        .gsProcessRendeles(payload);
+    }catch(ex){fetchRendeles(payload);}
+  } else {fetchRendeles(payload);}
+  var t=0;Object.keys(order).forEach(function(f){t+=order[f];});
+  document.getElementById('successInfo').textContent=selectedStore+' - '+t+' tub - '+selectedDay+'i szallitas';
+  document.getElementById('successS').classList.add('s');
+}
+function fetchRendeles(payload){
+  payload.action='rendeles';
+  fetch(DEPLOY_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(){toast('Fetch elkuldve','ok');}).catch(function(e){toast('Fetch hiba: '+e,'err');});
+}
+
+function reset(){
+  order={};selectedStore='';selectedDay='';loadedFlavors=[];
+  document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('a');});
+  document.querySelectorAll('.day-btn').forEach(function(b){b.classList.remove('a');});
+  document.getElementById('storeTag').textContent='Valassz uzletet';document.getElementById('storeTag').classList.remove('on');
+  document.getElementById('notesField').value='';document.getElementById('searchInput').value='';
+  document.getElementById('successS').classList.remove('s');
+  document.getElementById('flavorList').innerHTML='<div class="loading">\u2190 V\u00E1lassz \u00FCzletet az \u00EDzek megjelen\u00EDt\u00E9s\u00E9hez</div>';
+  upd();
+}
+
+function toast(m,type){
+  var t=document.getElementById('toast');t.textContent=m;
+  t.className='toast '+(type==='err'?'toast-err':'toast-ok')+' v';
+  setTimeout(function(){t.classList.remove('v');},2500);
+}
+
+// Kapcsolat teszt + init
+try{
+  if(typeof google!=='undefined'&&google.script&&google.script.run){
+    google.script.run
+      .withSuccessHandler(function(r){gsrWorks=true;loadFlavors();})
+      .withFailureHandler(function(){loadFlavors();})
+      .gsTest();
+  } else {loadFlavors();}
+}catch(e){loadFlavors();}
+</script>
+</body>
+</html>

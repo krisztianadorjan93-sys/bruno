@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Bruno &#8211; Scanner</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh}
+.top{background:#141414;border-bottom:1px solid #222;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{font-size:15px;font-weight:700;color:#fff}.brand span{color:#D0783A}
+.main{max-width:440px;margin:0 auto;padding:16px}
+.scr{display:none;animation:fi .2s ease}.scr.a{display:block}@keyframes fi{from{opacity:0}to{opacity:1}}
+.big{font-size:20px;font-weight:700;color:#fff;margin-bottom:6px}.sub{font-size:12px;color:#555;margin-bottom:16px;line-height:1.6}
+.card{background:#1a1a1a;border:1px solid #262626;border-radius:10px;padding:14px;margin-bottom:12px}
+.card-t{font-size:9px;font-weight:600;letter-spacing:2px;color:#444;margin-bottom:10px;font-family:monospace;text-transform:uppercase}
+.field{margin-bottom:10px}label{display:block;font-size:9px;font-weight:600;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+select,input{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:7px;color:#e0e0e0;padding:10px 11px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+select:focus,input:focus{border-color:#D0783A}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+.bo{background:#D0783A;color:#fff}.bd{background:#262626;color:#888}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info{border-radius:7px;padding:10px 12px;margin:10px 0;font-size:12px;line-height:1.6;display:flex;gap:8px}
+.ig{background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a}.ir{background:#2a0a0a;border:1px solid #5a1a1a;color:#ca6a6a}
+.io{background:#2a1a0a;border:1px solid #5a3a1a;color:#caa06a}
+.tub-info{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px}
+.tub-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}.tub-batch{font-family:monospace;font-size:12px;color:#D0783A}
+.tub-state{margin-top:8px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;display:inline-block}
+.ts-k{background:#04342C;color:#5DCAA5}.ts-s{background:#042C53;color:#85B7EB}.ts-o{background:#412402;color:#FAC775}.ts-c{background:#2a2a2a;color:#888}
+.op{width:100%;padding:14px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:left;display:flex;align-items:center;gap:10px;transition:background .15s}
+.op .oi{font-size:18px}.op .ot{flex:1}.op .od{font-size:10px;font-weight:400;opacity:.7;display:block;margin-top:2px}
+.op1{background:#04342C;color:#5DCAA5;border:1px solid #0F6E56}.op2{background:#042C53;color:#85B7EB;border:1px solid #185FA5}
+.op3{background:#1a1a1a;color:#aaa;border:1px solid #333}.op4{background:#412402;color:#FAC775;border:1px solid #854F0B}
+.op5{background:#2a0a0a;color:#ff8888;border:1px solid #5a1a1a}.op6{background:#1a1a3a;color:#AFA9EC;border:1px solid #3a3a6a}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.s{display:flex}.obox{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:20px;max-width:340px;width:100%;text-align:center}
+.obox .oi2{font-size:36px;margin-bottom:10px}.obox .ot2{font-size:14px;color:#ccc;margin-bottom:6px;line-height:1.6}
+.obox .os2{font-size:11px;color:#555;margin-bottom:14px}.obtn{display:flex;gap:8px}
+.obtn button{flex:1;padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.obc{background:#262626;color:#888}.obd{background:#5a1a1a;color:#ff8888}
+.toast{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:7px;font-size:12px;font-weight:600;z-index:300;white-space:nowrap}
+.toast.v{display:block}.tok{background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a}.ter{background:#2a0a0a;border:1px solid #5a1a1a;color:#ff8888}
+.suc{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:200;align-items:center;justify-content:center;text-align:center;padding:20px;flex-direction:column}
+.suc.s{display:flex}
+#qr-reader{border-radius:10px;overflow:hidden;margin-bottom:12px}
+optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">Bruno <span>Scanner</span></div></div>
+<div class="toast tok" id="toast"></div>
+<div class="overlay" id="cfm"><div class="obox"><div class="oi2" id="ci">&#9888;&#65039;</div><div class="ot2" id="ct"></div><div class="os2" id="cs"></div><div class="obtn"><button class="obc" onclick="closeCfm()">M&#233;gsem</button><button class="obd" id="cb" onclick="doCfm()">Igen</button></div></div></div>
+<div class="suc" id="suc"><div style="font-size:56px;margin-bottom:14px">&#9989;</div><div style="font-size:20px;font-weight:700;color:#5DCAA5;margin-bottom:6px" id="st"></div><div style="font-size:13px;color:#666;margin-bottom:20px" id="si"></div><button class="btn bd" onclick="reset()" style="max-width:200px">&#8617; &#218;j szkennel&#233;s</button></div>
+
+<div class="main">
+<div class="scr a" id="s1">
+  <div class="big">&#128247; Tub Scanner</div>
+  <div class="sub">V&#225;lassz &#252;zletet &#8594; szkennelj QR k&#243;dot vagy &#237;rd be k&#233;zzel.</div>
+  <div class="card"><div class="card-t">&#220;zlet</div>
+    <select id="sel" style="font-size:16px;padding:12px"><option value="">&#8211; V&#225;lassz &#8211;</option><option>Kolosy</option><option>Holl&#225;n</option><option>J&#243;kai</option><option>Szeged</option></select>
+    <button class="btn bo" onclick="startCam()" style="margin-top:10px">&#128247; QR Szkennel&#233;s</button>
+    <input type="file" id="qrFile" accept="image/*" capture="environment" style="display:none" onchange="scanPhoto(this)">
+    <div id="qr-reader" style="display:none;margin-top:10px"></div>
+    <button class="btn bd" id="qrStopBtn" style="display:none;margin-top:6px" onclick="stopCam()">&#10005; Kamera bez&#225;r&#225;s</button>
+  </div>
+  <div class="card"><div class="card-t">Vagy k&#233;zzel</div>
+    <div class="field"><label>&#205;z neve</label><select id="mf"><option value="">&#8211;</option><optgroup label="Tejsz&#237;nes"><option>Fior di latte</option><option>Amarena</option><option>Stracciatella</option><option>Cremino</option><option>Fiori di coco</option><option>Fiori di bacio</option><option>Fiori di pistacchio</option><option>Super yoghurt</option><option>Yoghurt maracuja</option><option>Yoghurt levendula</option><option>Keksz</option><option>Vanilia</option><option>Tiramisu</option><option>Zabaione</option><option>Crema di limone</option><option>Sos caramel</option><option>Pisztacia</option><option>Pisztacia extra</option><option>Mogyoro</option><option>Bacio</option><option>Bacio extra</option><option>Csoki</option><option>&#201;tcsoki</option><option>Raffaello</option><option>Torroncino</option><option>Zuppa inglese</option><option>Kave</option><option>Ferrero</option><option>Cremino nero</option><option>Fah&#233;j</option><option>Bacio perugino</option><option>Cantuccio Fiorentino</option></optgroup><optgroup label="Sorbetek"><option>Citrom</option><option>Mango</option><option>Eper</option><option>Malna</option><option>Bergamotto</option><option>Afonya</option><option>Ananas</option><option>Mandarin</option><option>S&#225;rgadinnye</option><option>Agrumi di sicilia</option><option>Gorogdinnye</option><option>Erdei gy&#252;m&#246;lcs</option></optgroup><optgroup label="Granita"><option>Eper Granita</option><option>Portofino Granita</option><option>Citrom Granita</option><option>Mango Granita</option><option>Agrumi Granita</option><option>Sargadinnye Granita</option><option>Maggio Granita</option><option>Kave Granita</option><option>Mandula Granita</option><option>Pisztacia Granita</option><option>Gorogdinnye Granita</option></optgroup></select></div>
+    <div class="r2"><div class="field"><label>Gy&#225;rt&#225;si sz&#225;m</label><input type="text" id="mb" placeholder="20260617-01" style="font-family:monospace"></div>
+    <div class="field"><label>S&#250;ly (g)</label><input type="number" id="mw" placeholder="5200"></div></div>
+    <button class="btn bd" onclick="manGo()">Keres&#233;s &#8594;</button>
+  </div>
+</div>
+
+<div class="scr" id="s2">
+  <div class="tub-info"><div class="tub-name" id="tn">&#8211;</div><div class="tub-batch" id="tb">&#8211;</div><div class="tub-state" id="tsx">&#8211;</div></div>
+  <div class="card"><div class="card-t">El&#233;rhet&#337; m&#369;veletek</div><div id="ops">Bet&#246;lt&#233;s...</div></div>
+  <div id="xf" style="display:none"><div class="card">
+    <div id="xm" style="display:none"><div class="field"><label>Marad&#233;k</label><select id="xmv"><option>1/2</option><option>1/4</option></select></div></div>
+    <div id="xh" style="display:none"><div class="field"><label>Honnan?</label><select id="xhv"><option value="">&#8211;</option><option>Kolosy</option><option>Holl&#225;n</option><option>J&#243;kai</option><option>Szeged</option></select></div></div>
+    <button class="btn bo" onclick="sendExtra()">K&#252;ld&#233;s</button>
+  </div></div>
+  <button class="btn bd" onclick="reset()" style="margin-top:8px">&#8617; &#218;j szkennel&#233;s</button>
+</div>
+</div>
+
+<script>
+var D={},selOp='',store='',gsrWorks=false;
+var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
+
+var qrInst=null,camActive=false;
+function startCam(){
+  store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
+  if(!qrInst)qrInst=new Html5Qrcode('qr-reader');
+  var el=document.getElementById('qr-reader');
+  var sb=document.getElementById('qrStopBtn');
+  el.style.display='block';sb.style.display='block';
+  qrInst.start({facingMode:'environment'},{fps:15,qrbox:{width:250,height:250}},
+    function(text){stopCam();parseQR(text);toast('QR beolvasva!',0);},
+    function(){}
+  ).then(function(){camActive=true;}).catch(function(){
+    el.style.display='none';sb.style.display='none';
+    document.getElementById('qrFile').click();
+  });
+}
+function stopCam(){
+  var el=document.getElementById('qr-reader');var sb=document.getElementById('qrStopBtn');
+  if(qrInst&&camActive){qrInst.stop().then(function(){camActive=false;el.style.display='none';sb.style.display='none';}).catch(function(){camActive=false;el.style.display='none';sb.style.display='none';});}
+  else{el.style.display='none';sb.style.display='none';}
+}
+function scanPhoto(inp){
+  if(!inp.files||!inp.files[0])return;
+  var file=inp.files[0];
+  toast('Feldolgozas...',0);
+  if(!qrInst)qrInst=new Html5Qrcode('qr-reader');
+  qrInst.scanFile(file,false).then(function(text){parseQR(text);toast('QR beolvasva!',0);}).catch(function(){toast('Nem sikerult beolvasni. Probald jobb megvilagitassal vagy ird be kezzel!',1);});
+  inp.value='';
+}
+
+function parseQR(u){try{var p=new URL(u).searchParams;
+  D={flavor:decodeURIComponent(p.get('entry.1429792248')||''),batch:decodeURIComponent(p.get('entry.2015076910')||''),weight:decodeURIComponent(p.get('entry.2000996021')||'')};
+  if(D.flavor&&D.batch)showTub();else toast('Ervenytelen QR',1);
+}catch(e){toast('Nem Bruno QR',1)}}
+
+function manGo(){store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
+  var f=document.getElementById('mf').value,b=document.getElementById('mb').value.trim(),w=document.getElementById('mw').value;
+  if(!f||!b){toast('Iz es gyartasi szam kotelezo!',1);return}D={flavor:f,batch:b,weight:w||''};showTub()}
+
+function showTub(){
+  document.getElementById('tn').textContent=D.flavor;
+  document.getElementById('tb').textContent=D.batch+(D.weight?' | '+D.weight+'g':'');
+  document.getElementById('tsx').textContent='Lekerdezes...';document.getElementById('tsx').className='tub-state';
+  document.getElementById('ops').innerHTML='<div style="color:#555;text-align:center;padding:10px">Allapot betoltese...</div>';
+  document.getElementById('xf').style.display='none';show('s2');
+  if(gsrWorks){
+    try{
+      google.script.run
+        .withSuccessHandler(function(state){showOps(state);})
+        .withFailureHandler(function(){fetchCheckBatch();})
+        .gsCheckBatch(D.batch);
+    }catch(e){fetchCheckBatch();}
+  } else {fetchCheckBatch();}
+}
+function fetchCheckBatch(){
+  fetch(DEPLOY_URL+'?action=checkBatch&batch='+encodeURIComponent(D.batch))
+    .then(function(r){return r.json();})
+    .then(function(j){showOps(j.state||'ISMERETLEN');})
+    .catch(function(){showOps('ISMERETLEN');});
+}
+
+function showOps(state){
+  var base=state.split(':')[0],st2=state.split(':')[1]||'';
+  var labels={'KONYH\u00C1N':'Konyhan','\u00DCZLETBEN':'Bontatlan ('+st2+')','KIBONTVA':'Kibontva','MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R':'Toltos','ELFOGYOTT':'Lezart','MEGSEMMIS\u00CDTVE':'Lezart','ISMERETLEN':'Uj/ismeretlen'};
+  var cls={'KONYH\u00C1N':'ts-k','\u00DCZLETBEN':'ts-s','KIBONTVA':'ts-o','MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R':'ts-o','ELFOGYOTT':'ts-c','MEGSEMMIS\u00CDTVE':'ts-c','ISMERETLEN':'ts-s'};
+  document.getElementById('tsx').textContent=labels[base]||state;document.getElementById('tsx').className='tub-state '+(cls[base]||'');
+
+  if(base==='ELFOGYOTT'||base==='MEGSEMMIS\u00CDTVE'){document.getElementById('ops').innerHTML='<div class="info ir">Lezart tub - nem lehet vele muveletet vegezni.</div>';return}
+
+  var o=[];
+  if(base==='KONYH\u00C1N') o.push({id:'szallitas',l:'Szallitas atvetel',d:'Kiszallitas az uzletbe',c:'op1'});
+  if(base==='\u00DCZLETBEN'){o.push({id:'kibontas',l:'Kibontas',d:'Pultba kerul',c:'op2'});o.push({id:'athelyezes',l:'Athelyezes',d:'Masik uzletbe',c:'op6',x:'h'})}
+  if(base==='KIBONTVA'){o.push({id:'elfogyott',l:'Elfogyott',d:'Tub kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos lett',d:'Maradt benne, hutobe',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva/betoltve',c:'op5',cf:1})}
+  if(base==='MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R'){o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Betoltve az ujba',c:'op5',cf:1});o.push({id:'mennyiseg',l:'Mennyiseg modositas',d:'Arany valtozott',c:'op4',x:'m'})}
+  if(base==='ISMERETLEN'){o.push({id:'szallitas',l:'Szallitas',d:'Konyharol',c:'op1'});o.push({id:'kibontas',l:'Kibontas',d:'Pultba',c:'op2'});o.push({id:'elfogyott',l:'Elfogyott',d:'Kiurult',c:'op3',cf:1});o.push({id:'toltos',l:'Toltos',d:'Maradt benne',c:'op4',x:'m'});o.push({id:'megsemmisitve',l:'Megsemmisitve',d:'Kidobva',c:'op5',cf:1})}
+
+  if(!o.length){document.getElementById('ops').innerHTML='<div class="info ir">Nincs elerheto muvelet.</div>';return}
+  document.getElementById('ops').innerHTML=o.map(function(op){return '<button class="op '+op.c+'" onclick="pick(\''+op.id+'\',\''+(op.x||'')+'\','+(op.cf?1:0)+')"><span class="oi">'+op.l.split(' ')[0]+'</span><span class="ot">'+op.l.split(' ').slice(1).join(' ')+'<span class="od">'+op.d+'</span></span></button>'}).join('');
+}
+
+function pick(id,extra,cf){
+  selOp=id;
+  if(cf||id==='megsemmisitve'||id==='elfogyott'){
+    var nm={'megsemmisitve':'Megsemmisitve','elfogyott':'Elfogyott'}; 
+    document.getElementById('ci').textContent=id==='megsemmisitve'?'\u274C':'\u2705';
+    document.getElementById('ct').textContent='Biztosan '+(nm[id]||id)+'?';
+    document.getElementById('cs').textContent=D.flavor+' - '+D.batch+'\nEz vegleges.';
+    document.getElementById('cfm').classList.add('s');return}
+  if(extra){document.getElementById('xf').style.display='block';
+    document.getElementById('xm').style.display=extra==='m'?'block':'none';
+    document.getElementById('xh').style.display=extra==='h'?'block':'none';return}
+  send(id,'','');
+}
+function closeCfm(){document.getElementById('cfm').classList.remove('s')}
+function doCfm(){closeCfm();send(selOp,'','')}
+function sendExtra(){var m=document.getElementById('xmv').value,h=document.getElementById('xhv').value;
+  if(selOp==='athelyezes'&&!h){toast('Valaszd ki honnan!',1);return}send(selOp,m,h)}
+
+function send(id,mar,hon){
+  var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
+  var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||'',honnan:hon||''};
+  if(gsrWorks){
+    try{
+      google.script.run
+        .withSuccessHandler(function(r){if(r==='BLOKKOLT')toast('Lezart tub!',1);})
+        .withFailureHandler(function(e){toast('GSR hiba: '+(e.message||e),1);fetchScannerSubmit(payload);})
+        .gsScannerSubmit(payload);
+    }catch(ex){fetchScannerSubmit(payload);}
+  } else {fetchScannerSubmit(payload);}
+  document.getElementById('st').textContent='OK '+(map[id]||id);
+  document.getElementById('si').textContent=D.flavor+' - '+D.batch+' - '+store;
+  document.getElementById('suc').classList.add('s');
+}
+function fetchScannerSubmit(payload){
+  payload.action='scanner_submit';
+  fetch(DEPLOY_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(){toast('Fetch elkuldve',0);}).catch(function(e){toast('Fetch hiba: '+e,1);});
+}
+
+function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('a')});document.getElementById(id).classList.add('a');window.scrollTo(0,0)}
+function reset(){D={};selOp='';document.getElementById('xf').style.display='none';document.getElementById('suc').classList.remove('s');document.getElementById('cfm').classList.remove('s');show('s1')}
+function toast(m,e){var t=document.getElementById('toast');t.textContent=(e?'! ':'OK ')+m;t.className='toast '+(e?'ter':'tok')+' v';setTimeout(function(){t.classList.remove('v')},2500)}
+
+// Kapcsolat teszt betolteskor
+try{
+  if(typeof google!=='undefined'&&google.script&&google.script.run){
+    google.script.run
+      .withSuccessHandler(function(r){gsrWorks=true;})
+      .withFailureHandler(function(){})
+      .gsTest();
+  }
+}catch(e){}
+</script>
+</body>
+</html>
