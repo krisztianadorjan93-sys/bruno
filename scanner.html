@@ -95,7 +95,7 @@ function startCam(){
   var el=document.getElementById('qr-reader');
   var sb=document.getElementById('qrStopBtn');
   el.style.display='block';sb.style.display='block';
-  qrInst.start({facingMode:'environment'},{fps:15,qrbox:{width:250,height:250}},
+  qrInst.start({facingMode:'environment'},{fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.75);return{width:s,height:s};},experimentalFeatures:{useBarCodeDetectorIfSupported:true},videoConstraints:{facingMode:{exact:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}},
     function(text){stopCam();parseQR(text);toast('QR beolvasva!',0);},
     function(){}
   ).then(function(){camActive=true;}).catch(function(){
