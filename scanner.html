@@ -77,7 +77,7 @@ optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
   <div class="card"><div class="card-t">El&#233;rhet&#337; m&#369;veletek</div><div id="ops">Bet&#246;lt&#233;s...</div></div>
   <div id="xf" style="display:none"><div class="card">
     <div id="xm" style="display:none"><div class="field"><label>Marad&#233;k</label><select id="xmv"><option>1/2</option><option>1/4</option></select></div></div>
-    <div id="xh" style="display:none"><div class="field"><label>Honnan?</label><select id="xhv"><option value="">&#8211;</option><option>Kolosy</option><option>Holl&#225;n</option><option>J&#243;kai</option><option>Szeged</option></select></div></div>
+    <div id="xh" style="display:none"><div class="field"><label>Hova?</label><select id="xhv"><option value="">&#8211;</option></select></div></div>
     <button class="btn bo" onclick="sendExtra()">K&#252;ld&#233;s</button>
   </div></div>
   <button class="btn bd" onclick="reset()" style="margin-top:8px">&#8617; &#218;j szkennel&#233;s</button>
@@ -150,9 +150,11 @@ function fetchCheckBatch(){
 
 function showOps(state){
   var base=state.split(':')[0],st2=state.split(':')[1]||'';
-  var labels={'KONYH\u00C1N':'Konyhan','\u00DCZLETBEN':'Bontatlan ('+st2+')','KIBONTVA':'Kibontva','MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R':'Toltos','ELFOGYOTT':'Lezart','MEGSEMMIS\u00CDTVE':'Lezart','ISMERETLEN':'Uj/ismeretlen'};
+  var labels={'KONYH\u00C1N':'Konyhan','\u00DCZLETBEN':'Bontatlan ('+st2+')','KIBONTVA':'Kibontva ('+st2+')','MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R':'Toltos ('+st2+')','ELFOGYOTT':'Lezart','MEGSEMMIS\u00CDTVE':'Lezart','ISMERETLEN':'Uj/ismeretlen'};
   var cls={'KONYH\u00C1N':'ts-k','\u00DCZLETBEN':'ts-s','KIBONTVA':'ts-o','MEGSEMMIS\u00CDT\u00C9SRE_V\u00C1R':'ts-o','ELFOGYOTT':'ts-c','MEGSEMMIS\u00CDTVE':'ts-c','ISMERETLEN':'ts-s'};
   document.getElementById('tsx').textContent=labels[base]||state;document.getElementById('tsx').className='tub-state '+(cls[base]||'');
+
+  if(st2&&st2!==store&&base!=='ELFOGYOTT'&&base!=='MEGSEMMIS\u00CDTVE'&&base!=='KONYH\u00C1N'&&base!=='ISMERETLEN'){document.getElementById('ops').innerHTML='<div class="info ir">\u26A0\uFE0F Ez a tub nem itt van! Hely: <b>'+st2+'</b><br>V\u00E1laszd ki a helyes \u00FCzletet a f\u0151oldalon.</div>';return}
 
   if(base==='ELFOGYOTT'||base==='MEGSEMMIS\u00CDTVE'){document.getElementById('ops').innerHTML='<div class="info ir">Lezart tub - nem lehet vele muveletet vegezni.</div>';return}
 
@@ -177,17 +179,19 @@ function pick(id,extra,cf){
     document.getElementById('cfm').classList.add('s');return}
   if(extra){document.getElementById('xf').style.display='block';
     document.getElementById('xm').style.display=extra==='m'?'block':'none';
-    document.getElementById('xh').style.display=extra==='h'?'block':'none';return}
+    document.getElementById('xh').style.display=extra==='h'?'block':'none';
+    if(extra==='h'){var sel=document.getElementById('xhv');sel.innerHTML='<option value="">–</option>';['Kolosy','Hollán','Jókai','Szeged'].forEach(function(s){if(s!==store)sel.innerHTML+='<option>'+s+'</option>';});}return}
   send(id,'','');
 }
 function closeCfm(){document.getElementById('cfm').classList.remove('s')}
 function doCfm(){closeCfm();send(selOp,'','')}
 function sendExtra(){var m=document.getElementById('xmv').value,h=document.getElementById('xhv').value;
-  if(selOp==='athelyezes'&&!h){toast('Valaszd ki honnan!',1);return}send(selOp,m,h)}
+  if(selOp==='athelyezes'){if(!h){toast('Valaszd ki hova!',1);return}if(h===store){toast('Nem helyezheted at ugyanoda!',1);return}}send(selOp,m,h)}
 
 function send(id,mar,hon){
   var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
-  var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||'',honnan:hon||''};
+  var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
+  if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}
   if(gsrWorks){
     try{
       google.script.run
