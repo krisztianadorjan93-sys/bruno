@@ -109,6 +109,19 @@
   .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;}
   .qr-tiny{font-family:Consolas,monospace;font-size:7px;color:#aaa;text-align:center;margin-top:2px;}
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
+
+  @media print{
+    @page{margin:0;size:62mm 100mm;}
+    html,body{width:62mm;margin:0;padding:0;background:#fff;min-height:auto;}
+    .header,.success-toast,.hint-box,.panel-title,#placeholderMsg{display:none!important;}
+    .layout{display:block!important;max-width:none;gap:0;padding:0;margin:0;}
+    .layout>.panel:first-child{display:none!important;}
+    .layout>.panel:last-child{background:none;border:none;padding:0;border-radius:0;margin:0;}
+    .label-wrap{max-width:none;width:62mm;border:none;border-radius:0;margin:0;overflow:visible;}
+    #labelContent{display:flex!important;flex-direction:column;}
+    .lh{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .lf{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
 </style>
 </head>
 <body>
