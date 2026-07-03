@@ -92,7 +92,7 @@
   .hint-box{margin-top:13px;padding:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;font-size:10px;color:#484848;line-height:2.2;font-family:'DM Mono',Consolas,monospace;}
 
   /* LABEL PREVIEW — 62×80mm Brother QL-800 */
-  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;min-height:340px;max-width:260px;display:flex;flex-direction:column;border:1px solid #333;aspect-ratio:62/80;}
+  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;max-width:260px;display:flex;flex-direction:column;border:1px solid #333;}
   .lh{background:#111;color:#fff;padding:5px 9px;}
   .lh-brand{font-size:11px;font-weight:800;letter-spacing:0.3px;}
   .lh-addr{font-size:7px;color:#888;margin-top:1px;}
@@ -105,8 +105,8 @@
   .l-batch{font-family:'DM Mono',Consolas,monospace;font-size:9px;font-weight:500;}
   .l-allergen-text{font-size:8px;font-weight:700;color:#856404;line-height:1.2;}
   .l-allergen-text.none{color:#155724;}
-  .lf{background:#f5f5f5;padding:3px 9px;font-size:6px;color:#888;border-top:1px solid #eee;line-height:1.4;}
-  .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;}
+  .lf{background:#f5f5f5;padding:8px 9px;font-size:8px;color:#888;border-top:1px solid #eee;line-height:1.4;}
+  .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;}
   .qr-tiny{font-family:Consolas,monospace;font-size:7px;color:#aaa;text-align:center;margin-top:2px;}
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
 </style>
@@ -448,7 +448,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),96);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),160);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -531,7 +531,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'@import url(\'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap\');'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:\'DM Sans\',Arial,sans-serif;margin:0;padding:0;display:flex;justify-content:center;}'
-    +'.label{width:62mm;height:80mm;display:flex;flex-direction:column;overflow:hidden;}'
+    +'.label{width:62mm;display:flex;flex-direction:column;overflow:hidden;}'
     +'.lh{background:#111;color:#fff;padding:1.5mm 2.5mm;}'
     +'.lh-b{font-size:9pt;font-weight:800;letter-spacing:0.3px;}'
     +'.lh-a{font-size:5.5pt;color:#aaa;margin-top:0.3mm;}'
@@ -545,9 +545,9 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:1mm 0;}'
-    +'.qrs img{width:22mm;height:22mm;display:block;}'
+    +'.qrs img{width:35mm;height:35mm;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:6pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
-    +'.lf{background:#f5f5f5;padding:1mm 2.5mm;font-size:5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
+    +'.lf{background:#f5f5f5;padding:2mm 2.5mm;font-size:7pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
     +'@media print{@page{margin:0;size:62mm 80mm;}}'
     +'</style></head><body>'
     +'<div class="label">'
