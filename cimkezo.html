@@ -448,7 +448,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),120);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),80);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -545,7 +545,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:1mm 0;}'
-    +'.qrs img{width:30mm;height:30mm;display:block;}'
+    +'.qrs img{width:18mm;height:18mm;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:5.5pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;padding:1mm 2.5mm;font-size:4.5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
     +'@media print{@page{margin:0;size:62mm 80mm;}}'
