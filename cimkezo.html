@@ -106,7 +106,7 @@
   .l-allergen-text{font-size:7px;font-weight:700;color:#856404;line-height:1.2;}
   .l-allergen-text.none{color:#155724;}
   .lf{background:#f5f5f5;padding:3px 9px;font-size:5.5px;color:#888;border-top:1px solid #eee;line-height:1.4;}
-  .qr-sec{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:4px 0;}
+  .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;}
   .qr-tiny{font-family:Consolas,monospace;font-size:6px;color:#aaa;text-align:center;margin-top:2px;}
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
 </style>
@@ -264,7 +264,7 @@
             <div class="qr-tiny" id="qrText">–</div>
           </div>
         </div>
-        <div class="lf">A termék a gyártástól számított 20 napig őrzi meg a szavatosságát. &nbsp;|&nbsp; −15 °C alatt tartandó.</div>
+        <div class="lf">Minőségét megőrzi gyártástól számított 20 napig. &nbsp;|&nbsp; −15 °C alatt tárolandó.</div>
       </div>
     </div>
 
@@ -448,7 +448,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),150);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),120);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -545,7 +545,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:1mm 0;}'
-    +'.qrs img{width:40mm;height:40mm;display:block;}'
+    +'.qrs img{width:30mm;height:30mm;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:5.5pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;padding:1mm 2.5mm;font-size:4.5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
     +'@media print{@page{margin:0;size:62mm 80mm;}}'
@@ -564,7 +564,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +(qrUrl?'<img src="'+qrUrl+'">':'')
     +'<div class="qrt">'+batch+'</div>'
     +'</div>'
-    +'<div class="lf">Szav.: gyártástól 20 nap &nbsp;|&nbsp; −15 °C alatt tartandó</div>'
+    +'<div class="lf">Minőségét megőrzi gyártástól számított 20 napig. &nbsp;|&nbsp; −15 °C alatt tárolandó.</div>'
     +'</div>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>'
     +'</body></html>';
