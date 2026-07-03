@@ -92,21 +92,22 @@
   .hint-box{margin-top:13px;padding:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;font-size:10px;color:#484848;line-height:2.2;font-family:'DM Mono',Consolas,monospace;}
 
   /* LABEL PREVIEW — 62×80mm Brother QL-800 */
-  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;min-height:300px;max-width:280px;display:flex;flex-direction:column;border:1px solid #333;aspect-ratio:62/80;}
+  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;min-height:340px;max-width:260px;display:flex;flex-direction:column;border:1px solid #333;aspect-ratio:62/80;}
   .lh{background:#111;color:#fff;padding:5px 9px;}
   .lh-brand{font-size:10px;font-weight:800;letter-spacing:0.3px;}
   .lh-addr{font-size:6px;color:#888;margin-top:1px;}
-  .lb{padding:8px 9px;flex:1;display:flex;gap:8px;}
-  .li{flex:1;min-width:0;}
-  .l-name{font-size:13px;font-weight:800;margin-bottom:5px;padding-bottom:4px;border-bottom:1.5px solid #eee;line-height:1.15;}
-  .l-row{margin-bottom:3px;font-size:9px;}
-  .l-row strong{display:block;font-size:6px;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:1px;font-family:'DM Mono',Consolas,monospace;}
-  .l-batch{font-family:'DM Mono',Consolas,monospace;font-size:9px;font-weight:500;}
-  .l-allergen-text{font-size:8px;font-weight:700;color:#856404;line-height:1.3;}
+  .lb{padding:7px 9px 4px;display:flex;flex-direction:column;}
+  .li{display:flex;flex-direction:column;}
+  .l-name{font-size:14px;font-weight:800;margin-bottom:4px;padding-bottom:3px;border-bottom:1.5px solid #eee;line-height:1.15;}
+  .l-details{display:flex;flex-wrap:wrap;gap:1px 12px;margin-bottom:2px;}
+  .l-row{font-size:8px;}
+  .l-row strong{display:block;font-size:5.5px;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:0px;font-family:'DM Mono',Consolas,monospace;}
+  .l-batch{font-family:'DM Mono',Consolas,monospace;font-size:8px;font-weight:500;}
+  .l-allergen-text{font-size:7px;font-weight:700;color:#856404;line-height:1.2;}
   .l-allergen-text.none{color:#155724;}
-  .lf{background:#f5f5f5;padding:4px 9px;font-size:6px;color:#888;border-top:1px solid #eee;line-height:1.4;}
-  .qr-sec{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
-  .qr-tiny{font-family:Consolas,monospace;font-size:5px;color:#aaa;text-align:center;max-width:75px;word-break:break-all;margin-top:1px;}
+  .lf{background:#f5f5f5;padding:3px 9px;font-size:5.5px;color:#888;border-top:1px solid #eee;line-height:1.4;}
+  .qr-sec{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:4px 0;}
+  .qr-tiny{font-family:Consolas,monospace;font-size:6px;color:#aaa;text-align:center;margin-top:2px;}
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
 </style>
 </head>
@@ -252,9 +253,11 @@
           <div class="li">
             <div class="l-name" id="lProductName">–</div>
             <div class="l-row"><strong>Allergének</strong><div id="lAllergens">–</div></div>
-            <div class="l-row" style="margin-top:5px;"><strong>Súlya</strong><span id="lWeight" style="font-weight:700;">–</span></div>
-            <div class="l-row"><strong>Gyártási szám</strong><span class="l-batch" id="lBatch">–</span></div>
-            <div class="l-row"><strong>Dátum</strong><span id="lDate">–</span></div>
+            <div class="l-details">
+              <div class="l-row"><strong>Súly</strong><span id="lWeight" style="font-weight:700;">–</span></div>
+              <div class="l-row"><strong>Gy.szám</strong><span class="l-batch" id="lBatch">–</span></div>
+              <div class="l-row"><strong>Dátum</strong><span id="lDate">–</span></div>
+            </div>
           </div>
           <div class="qr-sec">
             <div id="qrcode-preview"></div>
@@ -445,7 +448,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),70);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),150);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -507,7 +510,7 @@ function printLabel(){
   }
 
   try{
-    new QRCode(tmp,{text:formUrl,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+    new QRCode(tmp,{text:formUrl,width:400,height:400,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
     setTimeout(function(){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
@@ -532,34 +535,35 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.lh{background:#111;color:#fff;padding:1.5mm 2.5mm;}'
     +'.lh-b{font-size:8pt;font-weight:800;letter-spacing:0.3px;}'
     +'.lh-a{font-size:5pt;color:#aaa;margin-top:0.3mm;}'
-    +'.lb{padding:2mm 2.5mm;display:flex;gap:2mm;flex:1;align-items:flex-start;}'
-    +'.li{flex:1;min-width:0;}'
-    +'.l-name{font-size:10pt;font-weight:800;margin-bottom:1.5mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;}'
-    +'.r{margin-bottom:1mm;}'
-    +'.rl{font-size:4.5pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.3mm;font-family:\'DM Mono\',Consolas,monospace;}'
+    +'.lb{padding:2mm 2.5mm 1mm;display:flex;flex-direction:column;}'
+    +'.l-name{font-size:11pt;font-weight:800;margin-bottom:1mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;}'
+    +'.r{margin-bottom:0.5mm;}'
+    +'.rl{font-size:4.5pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.2mm;font-family:\'DM Mono\',Consolas,monospace;}'
     +'.rv{font-size:7.5pt;}'
     +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:7pt;font-weight:600;}'
     +'.al{font-size:6.5pt;font-weight:700;color:#856404;line-height:1.3;}'
     +'.al.none{color:#155724;}'
-    +'.qrs{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}'
-    +'.qrs img{width:25mm;height:25mm;display:block;}'
-    +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:5pt;color:#aaa;text-align:center;margin-top:0.5mm;}'
+    +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;}'
+    +'.qrs{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;padding:1mm 0;}'
+    +'.qrs img{width:40mm;height:40mm;display:block;}'
+    +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:5.5pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;padding:1mm 2.5mm;font-size:4.5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
     +'@media print{@page{margin:0;size:62mm 80mm;}}'
     +'</style></head><body>'
     +'<div class="label">'
     +'<div class="lh"><div class="lh-b">IL BRUNO ITALIANO KFT.</div><div class="lh-a">1036 Budapest, Lajos u. 70-72.</div></div>'
-    +'<div class="lb"><div class="li">'
+    +'<div class="lb">'
     +'<div class="l-name">'+prod+'</div>'
     +'<div class="r"><span class="rl">Allergének</span><span class="'+alClass+'">'+allergenText+'</span></div>'
+    +'<div class="det">'
     +'<div class="r"><span class="rl">Súly</span><span class="rv" style="font-weight:800;">'+wText+'</span></div>'
-    +'<div class="r"><span class="rl">Gyártási szám</span><span class="rb">'+batch+'</span></div>'
+    +'<div class="r"><span class="rl">Gy.szám</span><span class="rb">'+batch+'</span></div>'
     +'<div class="r"><span class="rl">Dátum</span><span class="rv">'+today+'</span></div>'
-    +'</div>'
+    +'</div></div>'
     +'<div class="qrs">'
     +(qrUrl?'<img src="'+qrUrl+'">':'')
     +'<div class="qrt">'+batch+'</div>'
-    +'</div></div>'
+    +'</div>'
     +'<div class="lf">Szav.: gyártástól 20 nap &nbsp;|&nbsp; −15 °C alatt tartandó</div>'
     +'</div>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>'
