@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Gelateria – Cimkéző</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{font-family:'DM Sans','Segoe UI',Arial,sans-serif;background:#1C1C1C;color:#DEDEDE;min-height:100vh;padding:20px;}
+
+  .header{text-align:center;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid #333;}
+  .header-sub{font-family:'DM Mono',Consolas,monospace;font-size:10px;letter-spacing:4px;color:#666;text-transform:uppercase;margin-bottom:4px;}
+  .header-brand{font-size:22px;font-weight:700;color:#F0F0F0;letter-spacing:-0.5px;}
+
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px;margin:0 auto;}
+
+  .panel{background:#262626;border:1px solid #333;border-radius:12px;padding:20px;}
+  .panel-title{font-size:10px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#555;margin-bottom:18px;font-family:'DM Mono',Consolas,monospace;}
+
+  .field{margin-bottom:13px;}
+  label{display:block;font-size:10px;font-weight:600;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+  .auto-badge{display:inline-block;background:#1A2E1A;color:#5A9E5A;font-size:8px;font-family:'DM Mono',Consolas,monospace;padding:1px 5px;border-radius:3px;margin-left:4px;border:1px solid #2A4A2A;}
+
+  input[type="number"]{width:100%;background:#1A1A1A;border:1px solid #383838;border-radius:8px;color:#E0E0E0;padding:10px 12px;font-family:'DM Sans','Segoe UI',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;}
+  input[type="number"]:focus{border-color:#D0783A;}
+  input[type="number"].error{border-color:#C04040;}
+
+  .auto-field{background:#1A1A1A;border:1px solid #333;border-radius:8px;padding:10px 12px;font-family:'DM Mono',Consolas,monospace;font-size:13px;color:#C07840;min-height:38px;display:flex;align-items:flex-start;flex-wrap:wrap;gap:4px;}
+
+  .a-pill{display:inline-flex;align-items:center;background:#3A2800;border:1px solid #6A4800;color:#E0A040;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .a-pill.none{background:#0A2A0A;border-color:#1A5A1A;color:#5AAA5A;}
+
+  .weight-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;}
+  .weight-unit{background:#222;border:1px solid #383838;border-radius:8px;padding:10px 14px;color:#555;font-family:'DM Mono',Consolas,monospace;font-size:14px;}
+  .weight-error{display:none;color:#E05050;font-size:11px;margin-top:5px;padding:6px 10px;background:#2A0A0A;border-radius:6px;border:1px solid #4A1A1A;}
+  .weight-error.visible{display:block;}
+
+  .counter-row{display:flex;align-items:center;gap:8px;background:#1A1A1A;border:1px solid #333;border-radius:8px;padding:10px 12px;margin-bottom:13px;}
+  .counter-label{font-size:10px;color:#555;font-family:'DM Mono',Consolas,monospace;text-transform:uppercase;letter-spacing:1px;flex:1;}
+  .counter-val{font-family:'DM Mono',Consolas,monospace;font-size:20px;font-weight:600;color:#D0783A;min-width:38px;text-align:center;}
+  .counter-btn{background:#303030;border:1px solid #404040;color:#CCC;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background 0.1s;}
+  .counter-btn:hover{background:#404040;}
+
+  .info-bar{background:#1A1A1A;border:1px solid #333;border-radius:8px;padding:9px 12px;margin-bottom:13px;font-size:11px;font-family:'DM Mono',Consolas,monospace;color:#555;display:flex;justify-content:space-between;align-items:center;}
+  .info-bar span.val{color:#D0783A;font-size:17px;font-weight:600;}
+
+  .btn-print{width:100%;background:#D0783A;color:#fff;border:none;border-radius:8px;padding:14px;font-family:'DM Sans','Segoe UI',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s,transform 0.1s;margin-top:14px;}
+  .btn-print:hover{background:#B86030;}
+  .btn-print:active{transform:scale(0.98);}
+  .btn-print:disabled{background:#2A2A2A;color:#484848;cursor:not-allowed;}
+
+  .divider{border:none;border-top:1px solid #303030;margin:14px 0;}
+
+  .success-toast{display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1A3A1A;border:1px solid #2A6A2A;color:#6ACA6A;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.5);white-space:nowrap;}
+  .success-toast.visible{display:block;animation:tin 0.2s ease;}
+  @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+  /* CUSTOM SELECT */
+  .cs-wrap{position:relative;}
+  .cs-trigger{width:100%;background:#1A1A1A;border:1px solid #383838;border-radius:8px;padding:10px 12px;font-family:'DM Sans','Segoe UI',sans-serif;font-size:14px;color:#DDD;cursor:pointer;display:flex;align-items:center;gap:9px;outline:none;user-select:none;transition:border-color 0.15s;}
+  .cs-trigger:hover,.cs-trigger:focus{border-color:#D0783A;}
+  .cs-trigger.open{border-color:#D0783A;border-bottom-left-radius:0;border-bottom-right-radius:0;}
+  .cs-cat-dot{width:10px;height:10px;border-radius:50%;background:#404040;flex-shrink:0;transition:background 0.2s;}
+  .cs-text{flex:1;color:#555;}
+  .cs-text.selected{color:#E0E0E0;}
+  .cs-arrow{color:#555;font-size:10px;flex-shrink:0;transition:transform 0.15s;}
+  .cs-trigger.open .cs-arrow{transform:rotate(180deg);}
+
+  .cs-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:#222;border:1px solid #D0783A;border-top:none;border-bottom-left-radius:8px;border-bottom-right-radius:8px;z-index:200;max-height:300px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+  .cs-dropdown.open{display:block;}
+  .cs-dropdown::-webkit-scrollbar{width:4px;}
+  .cs-dropdown::-webkit-scrollbar-thumb{background:#404040;border-radius:4px;}
+
+  .cs-group-label{padding:7px 13px 5px;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'DM Mono',Consolas,monospace;display:flex;align-items:center;gap:7px;position:sticky;top:0;}
+  .cs-group-label .gl-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+  .cat-cream-label{background:#2A2010;color:#C09040;border-top:1px solid #3A3010;}
+  .cat-fruit-label{background:#2A1018;color:#C05070;border-top:1px solid #3A1820;}
+  .cat-ice-label  {background:#10182A;color:#5080C0;border-top:1px solid #182030;}
+  .cat-cream-label .gl-dot{background:#D09840;}
+  .cat-fruit-label .gl-dot{background:#D06080;}
+  .cat-ice-label   .gl-dot{background:#6090D0;}
+
+  .cs-option{padding:8px 13px 8px 28px;font-size:13px;cursor:pointer;color:#CCC;transition:background 0.08s;}
+  .cs-option:hover{background:#303030;color:#FFF;}
+  .cs-option.selected{background:#2A1E0E;color:#D09840;font-weight:600;}
+
+  /* HINT */
+  .hint-box{margin-top:13px;padding:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;font-size:10px;color:#484848;line-height:2.2;font-family:'DM Mono',Consolas,monospace;}
+
+  /* LABEL PREVIEW — 62×80mm Brother QL-800 */
+  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;min-height:300px;max-width:280px;display:flex;flex-direction:column;border:1px solid #333;aspect-ratio:62/80;}
+  .lh{background:#111;color:#fff;padding:5px 9px;}
+  .lh-brand{font-size:10px;font-weight:800;letter-spacing:0.3px;}
+  .lh-addr{font-size:6px;color:#888;margin-top:1px;}
+  .lb{padding:8px 9px;flex:1;display:flex;gap:8px;}
+  .li{flex:1;min-width:0;}
+  .l-name{font-size:13px;font-weight:800;margin-bottom:5px;padding-bottom:4px;border-bottom:1.5px solid #eee;line-height:1.15;}
+  .l-row{margin-bottom:3px;font-size:9px;}
+  .l-row strong{display:block;font-size:6px;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:1px;font-family:'DM Mono',Consolas,monospace;}
+  .l-batch{font-family:'DM Mono',Consolas,monospace;font-size:9px;font-weight:500;}
+  .l-allergen-text{font-size:8px;font-weight:700;color:#856404;line-height:1.3;}
+  .l-allergen-text.none{color:#155724;}
+  .lf{background:#f5f5f5;padding:4px 9px;font-size:6px;color:#888;border-top:1px solid #eee;line-height:1.4;}
+  .qr-sec{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+  .qr-tiny{font-family:Consolas,monospace;font-size:5px;color:#aaa;text-align:center;max-width:75px;word-break:break-all;margin-top:1px;}
+  .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<div class="success-toast" id="successToast"></div>
+
+<div class="header">
+  <div class="header-sub">Gyártási Cimkéző — v3.1</div>
+  <div class="header-brand">Bruno Gelateria</div>
+</div>
+
+<div class="layout">
+
+  <div class="panel">
+    <div class="panel-title">Termék Adatok</div>
+
+    <div class="field">
+      <label>Termék neve</label>
+      <div class="cs-wrap" id="csWrap">
+        <div class="cs-trigger" id="csTrigger" tabindex="0" onclick="toggleDropdown()" onkeydown="csKeydown(event)">
+          <div class="cs-cat-dot" id="csDot"></div>
+          <span class="cs-text" id="csText">– Válassz terméket –</span>
+          <span class="cs-arrow">▾</span>
+        </div>
+        <div class="cs-dropdown" id="csDropdown">
+          <div class="cs-group-label cat-cream-label"><div class="gl-dot"></div>🍨 Tejszínes Gelato</div>
+          <div class="cs-option" onclick="selectProduct('Fior di latte','cream')">Fior di latte</div>
+          <div class="cs-option" onclick="selectProduct('Amarena','cream')">Amarena</div>
+          <div class="cs-option" onclick="selectProduct('Stracciatella','cream')">Stracciatella</div>
+          <div class="cs-option" onclick="selectProduct('Cremino','cream')">Cremino</div>
+          <div class="cs-option" onclick="selectProduct('Fiori di coco','cream')">Fiori di coco</div>
+          <div class="cs-option" onclick="selectProduct('Fiori di bacio','cream')">Fiori di bacio</div>
+          <div class="cs-option" onclick="selectProduct('Fiori di pistacchio','cream')">Fiori di pistacchio</div>
+          <div class="cs-option" onclick="selectProduct('Super yoghurt','cream')">Super yoghurt</div>
+          <div class="cs-option" onclick="selectProduct('Yoghurt maracuja','cream')">Yoghurt maracuja</div>
+          <div class="cs-option" onclick="selectProduct('Yoghurt levendula','cream')">Yoghurt levendula</div>
+          <div class="cs-option" onclick="selectProduct('Keksz','cream')">Keksz</div>
+          <div class="cs-option" onclick="selectProduct('Vanilia','cream')">Vanilia</div>
+          <div class="cs-option" onclick="selectProduct('Tiramisu','cream')">Tiramisu</div>
+          <div class="cs-option" onclick="selectProduct('Zabaione','cream')">Zabaione</div>
+          <div class="cs-option" onclick="selectProduct('Crema di limone','cream')">Crema di limone</div>
+          <div class="cs-option" onclick="selectProduct('Sos caramel','cream')">Sos caramel</div>
+          <div class="cs-option" onclick="selectProduct('Pisztacia','cream')">Pisztacia</div>
+          <div class="cs-option" onclick="selectProduct('Pisztacia extra','cream')">Pisztacia extra</div>
+          <div class="cs-option" onclick="selectProduct('Mogyoro','cream')">Mogyoro</div>
+          <div class="cs-option" onclick="selectProduct('Bacio','cream')">Bacio</div>
+          <div class="cs-option" onclick="selectProduct('Bacio extra','cream')">Bacio extra</div>
+          <div class="cs-option" onclick="selectProduct('Csoki','cream')">Csoki</div>
+          <div class="cs-option" onclick="selectProduct('Étcsoki','cream')">Étcsoki</div>
+          <div class="cs-option" onclick="selectProduct('Raffaello','cream')">Raffaello</div>
+          <div class="cs-option" onclick="selectProduct('Torroncino','cream')">Torroncino</div>
+          <div class="cs-option" onclick="selectProduct('Zuppa inglese','cream')">Zuppa inglese</div>
+          <div class="cs-option" onclick="selectProduct('Kave','cream')">Kave</div>
+          <div class="cs-option" onclick="selectProduct('Ferrero','cream')">Ferrero</div>
+          <div class="cs-option" onclick="selectProduct('Cremino nero','cream')">Cremino nero</div>
+          <div class="cs-option" onclick="selectProduct('Fahéj','cream')">Fahéj</div>
+          <div class="cs-option" onclick="selectProduct('Bacio perugino','cream')">Bacio perugino</div>
+          <div class="cs-option" onclick="selectProduct('Cantuccio Fiorentino','cream')">Cantuccio Fiorentino</div>
+          <div class="cs-group-label cat-fruit-label"><div class="gl-dot"></div>🍓 Gyümölcsös Gelato</div>
+          <div class="cs-option" onclick="selectProduct('Citrom','fruit')">Citrom</div>
+          <div class="cs-option" onclick="selectProduct('Mango','fruit')">Mango</div>
+          <div class="cs-option" onclick="selectProduct('Eper','fruit')">Eper</div>
+          <div class="cs-option" onclick="selectProduct('Malna','fruit')">Malna</div>
+          <div class="cs-option" onclick="selectProduct('Bergamotto','fruit')">Bergamotto</div>
+          <div class="cs-option" onclick="selectProduct('Afonya','fruit')">Afonya</div>
+          <div class="cs-option" onclick="selectProduct('Ananas','fruit')">Ananas</div>
+          <div class="cs-option" onclick="selectProduct('Mandarin','fruit')">Mandarin</div>
+          <div class="cs-option" onclick="selectProduct('Sárgadinnye','fruit')">Sárgadinnye</div>
+          <div class="cs-option" onclick="selectProduct('Agrumi di sicilia','fruit')">Agrumi di sicilia</div>
+          <div class="cs-option" onclick="selectProduct('Gorogdinnye','fruit')">Gorogdinnye</div>
+          <div class="cs-option" onclick="selectProduct('Erdei gyümölcs','fruit')">Erdei gyümölcs</div>
+          <div class="cs-group-label cat-ice-label"><div class="gl-dot"></div>❄️ Granita</div>
+          <div class="cs-option" onclick="selectProduct('Eper Granita','ice')">Eper Granita</div>
+          <div class="cs-option" onclick="selectProduct('Portofino Granita','ice')">Portofino Granita</div>
+          <div class="cs-option" onclick="selectProduct('Citrom Granita','ice')">Citrom Granita</div>
+          <div class="cs-option" onclick="selectProduct('Mango Granita','ice')">Mango Granita</div>
+          <div class="cs-option" onclick="selectProduct('Agrumi Granita','ice')">Agrumi Granita</div>
+          <div class="cs-option" onclick="selectProduct('Sargadinnye Granita','ice')">Sargadinnye Granita</div>
+          <div class="cs-option" onclick="selectProduct('Maggio Granita','ice')">Maggio Granita</div>
+          <div class="cs-option" onclick="selectProduct('Kave Granita','ice')">Kave Granita</div>
+          <div class="cs-option" onclick="selectProduct('Mandula Granita','ice')">Mandula Granita</div>
+          <div class="cs-option" onclick="selectProduct('Pisztacia Granita','ice')">Pisztacia Granita</div>
+          <div class="cs-option" onclick="selectProduct('Gorogdinnye Granita','ice')">Gorogdinnye Granita</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Allergének <span class="auto-badge">AUTO</span></label>
+      <div class="auto-field" id="allergenDisplay"><span style="color:#333;font-size:12px;">–</span></div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="info-bar">
+      <span>Ma nyomtatva:</span>
+      <span class="val" id="todayCount">0</span>&nbsp;db
+    </div>
+
+    <div class="counter-row">
+      <div class="counter-label">Sorszám (kézi korrekció)</div>
+      <button class="counter-btn" onclick="changeSeq(-1)">−</button>
+      <div class="counter-val" id="seqDisplay">01</div>
+      <button class="counter-btn" onclick="changeSeq(1)">+</button>
+    </div>
+
+    <div class="field">
+      <label>Gyártási szám <span class="auto-badge">AUTO</span></label>
+      <div class="auto-field" id="batchDisplay" style="font-size:14px;color:#E0E0E0;align-items:center;">— válassz terméket</div>
+    </div>
+
+    <div class="field">
+      <label>Gyártás dátuma <span class="auto-badge">AUTO</span></label>
+      <div class="auto-field" id="dateDisplay" style="font-size:14px;color:#E0E0E0;align-items:center;">–</div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="field">
+      <label>Súly – mérés után töltsd ki!</label>
+      <div class="weight-row">
+        <input type="number" id="weightInput" placeholder="pl. 5200" min="1" step="50" oninput="onWeightInput()">
+        <div class="weight-unit">g</div>
+      </div>
+      <div class="weight-error" id="weightError">⚠ Kötelező! Mérd le a súlyt nyomtatás előtt.</div>
+    </div>
+
+    <button class="btn-print" id="printBtn" onclick="printLabel()" disabled>🖨️ &nbsp;Cimke Nyomtatása</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Cimke Előnézet (élő)</div>
+
+    <div class="label-wrap" id="labelWrap">
+      <div class="placeholder" id="placeholderMsg">← Válassz terméket<br>a cimke előnézet megjelenéséhez</div>
+      <div id="labelContent" style="display:none;flex-direction:column;flex:1;">
+        <div class="lh">
+          <div class="lh-brand">IL BRUNO ITALIANO KFT.</div>
+          <div class="lh-addr">1036 Budapest, Lajos utca 70-72.</div>
+        </div>
+        <div class="lb">
+          <div class="li">
+            <div class="l-name" id="lProductName">–</div>
+            <div class="l-row"><strong>Allergének</strong><div id="lAllergens">–</div></div>
+            <div class="l-row" style="margin-top:5px;"><strong>Súlya</strong><span id="lWeight" style="font-weight:700;">–</span></div>
+            <div class="l-row"><strong>Gyártási szám</strong><span class="l-batch" id="lBatch">–</span></div>
+            <div class="l-row"><strong>Dátum</strong><span id="lDate">–</span></div>
+          </div>
+          <div class="qr-sec">
+            <div id="qrcode-preview"></div>
+            <div class="qr-tiny" id="qrText">–</div>
+          </div>
+        </div>
+        <div class="lf">A termék a gyártástól számított 20 napig őrzi meg a szavatosságát. &nbsp;|&nbsp; −15 °C alatt tartandó.</div>
+      </div>
+    </div>
+
+    <div class="hint-box">
+      <div>🔄 &nbsp;QR kód = Google Form előkitöltve</div>
+      <div>⬆️ &nbsp;Sorszám nyomtatás után +1 automatikusan</div>
+      <div>💾 &nbsp;Napi számláló böngészőben mentve</div>
+      <div>⌨️ &nbsp;Enter = Nyomtatás</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ALLERGENS = {
+  "Fior di latte":        ["Tej"],
+  "Amarena":              ["Tej"],
+  "Stracciatella":        ["Tej","Diófélék","Szója","Kén-dioxid"],
+  "Cremino":              ["Tej","Diófélék","Szója"],
+  "Fiori di coco":        ["Tej","Tojás","Gabona","Szója","Szezámmag"],
+  "Fiori di bacio":       ["Tej","Diófélék","Gabona","Szója","Földimogyoró"],
+  "Fiori di pistacchio":  ["Tej","Tojás","Diófélék","Földimogyoró","Szója","Gabona"],
+  "Super yoghurt":        ["Tej","Szója"],
+  "Yoghurt maracuja":     ["Tej","Szója"],
+  "Yoghurt levendula":    ["Tej","Tojás","Gabona","Szója"],
+  "Keksz":                ["Tej","Tojás","Gabona"],
+  "Vanilia":              ["Tej","Tojás"],
+  "Tiramisu":             ["Tej","Tojás"],
+  "Zabaione":             ["Tej","Tojás","Kén-dioxid"],
+  "Crema di limone":      ["Tej","Tojás","Gabona","Szója"],
+  "Sos caramel":          ["Tej"],
+  "Pisztacia":            ["Tej","Diófélék","Földimogyoró"],
+  "Pisztacia extra":      ["Tej","Tojás","Diófélék","Gabona","Szója","Földimogyoró"],
+  "Mogyoro":              ["Tej","Diófélék","Szója","Földimogyoró"],
+  "Bacio":                ["Tej","Diófélék","Szója","Földimogyoró"],
+  "Bacio extra":          ["Tej","Diófélék","Gabona","Szója","Földimogyoró"],
+  "Csoki":                ["Tej"],
+  "Étcsoki":              ["Tej","Szója"],
+  "Raffaello":            ["Tej","Diófélék"],
+  "Torroncino":           ["Tej","Tojás","Diófélék"],
+  "Zuppa inglese":        ["Tej","Kén-dioxid"],
+  "Kave":                 ["Tej"],
+  "Ferrero":              ["Tej","Diófélék","Szója"],
+  "Cremino nero":         ["Tej","Diófélék","Szója"],
+  "Fahéj":                ["Tej","Tojás","Gabona","Szója","Zeller","Mustár","Szezámmag"],
+  "Bacio perugino":       ["Tej","Diófélék","Szója","Földimogyoró"],
+  "Cantuccio Fiorentino": ["Tej","Tojás","Diófélék","Gabona","Szója","Kén-dioxid","Földimogyoró","Mustár","Csillagfürt"],
+  "Citrom":               ["Szója"],
+  "Mango":                ["Szója"],
+  "Eper":                 ["Szója"],
+  "Malna":                ["Szója"],
+  "Bergamotto":           ["Szója"],
+  "Afonya":               ["Szója"],
+  "Ananas":               ["Szója"],
+  "Mandarin":             ["Szója"],
+  "Sárgadinnye":          ["Szója"],
+  "Agrumi di sicilia":    ["Szója"],
+  "Gorogdinnye":          ["Szója"],
+  "Erdei gyümölcs":       ["Szója"],
+  "Eper Granita":         [],
+  "Portofino Granita":    [],
+  "Citrom Granita":       [],
+  "Mango Granita":        [],
+  "Agrumi Granita":       [],
+  "Sargadinnye Granita":  [],
+  "Maggio Granita":       [],
+  "Kave Granita":         ["Tej","Szója"],
+  "Mandula Granita":      ["Diófélék","Földimogyoró","Szója"],
+  "Pisztacia Granita":    ["Diófélék","Földimogyoró"],
+  "Gorogdinnye Granita":  [],
+};
+
+var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
+
+const FORM_BASE   = 'https://docs.google.com/forms/d/e/1FAIpQLSfQ5PvTFHi4We7fDQNwqUjMFPhv46c2NOqRcAVMYuzHR8HgwQ/viewform';
+const ENTRY_IZ    = 'entry.1429792248';
+const ENTRY_BATCH = 'entry.2015076910';
+const ENTRY_SULY  = 'entry.2000996021';
+
+function buildFormUrl(batch,flavor,weight){
+  var p=new URLSearchParams();
+  p.set('usp','pp_url');p.set(ENTRY_IZ,flavor);p.set(ENTRY_BATCH,batch);
+  if(weight)p.set(ENTRY_SULY,weight);
+  return FORM_BASE+'?'+p.toString();
+}
+
+var currentProduct='',currentCategory='',seqNum=1,todayCount=0;
+var CAT_COLORS={cream:'#D09840',fruit:'#D06080',ice:'#6090D0'};
+
+function dateKey(){var d=new Date();return ''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());}
+function p2(n){return String(n).padStart(2,'0');}
+function batchNum(){return dateKey()+'-'+p2(seqNum);}
+function displayDate(){var d=new Date();return d.getFullYear()+'.'+p2(d.getMonth()+1)+'.'+p2(d.getDate());}
+
+try{todayCount=parseInt(localStorage.getItem('bruno_cnt_'+dateKey())||'0');}catch(e){}
+seqNum=todayCount+1;
+document.getElementById('dateDisplay').textContent=displayDate();
+document.getElementById('seqDisplay').textContent=p2(seqNum);
+document.getElementById('todayCount').textContent=todayCount;
+
+// Custom select
+function toggleDropdown(){
+  var dd=document.getElementById('csDropdown');
+  if(dd.classList.contains('open')){closeDropdown();}
+  else{document.getElementById('csTrigger').classList.add('open');dd.classList.add('open');}
+}
+function closeDropdown(){
+  document.getElementById('csTrigger').classList.remove('open');
+  document.getElementById('csDropdown').classList.remove('open');
+}
+document.addEventListener('click',function(e){if(!document.getElementById('csWrap').contains(e.target))closeDropdown();});
+function csKeydown(e){
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleDropdown();}
+  if(e.key==='Escape')closeDropdown();
+}
+function selectProduct(product,category){
+  currentProduct=product;currentCategory=category;
+  document.getElementById('csDot').style.background=CAT_COLORS[category]||'#404040';
+  var t=document.getElementById('csText');t.textContent=product;t.classList.add('selected');
+  document.querySelectorAll('.cs-option').forEach(function(el){
+    el.classList.toggle('selected',el.textContent.trim()===product);
+  });
+  closeDropdown();onProductChange();
+}
+
+// Logic
+function changeSeq(delta){
+  seqNum=Math.max(1,seqNum+delta);
+  document.getElementById('seqDisplay').textContent=p2(seqNum);
+  document.getElementById('batchDisplay').textContent=currentProduct?batchNum():'— válassz terméket';
+  if(currentProduct)updatePreview();
+}
+
+function pillsForm(pills){
+  if(!pills||!pills.length)return '<span class="a-pill none">✓ Nincs allergén</span>';
+  return pills.map(function(p){return '<span class="a-pill">⚠ '+p+'</span>';}).join('');
+}
+function pillsLabel(pills){
+  if(!pills||!pills.length)return '<span class="la-pill none">✓ Nincs allergén</span>';
+  return pills.map(function(p){return '<span class="la-pill">⚠ '+p+'</span>';}).join('');
+}
+function pillsPrint(pills){
+  if(!pills||!pills.length)return '<span style="display:inline-block;background:#d4edda;border:1px solid #28a745;color:#155724;font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;">✓ Nincs allergén</span>';
+  return pills.map(function(p){return '<span style="display:inline-block;background:#fff3cd;border:1px solid #ffc107;color:#856404;font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;margin:1px 2px 0 0;">⚠ '+p+'</span>';}).join('');
+}
+
+function onProductChange(){
+  document.getElementById('weightInput').value='';
+  var pills=ALLERGENS[currentProduct]||[];
+  document.getElementById('allergenDisplay').innerHTML=pillsForm(pills);
+  document.getElementById('batchDisplay').textContent=batchNum();
+  document.getElementById('weightError').classList.remove('visible');
+  document.getElementById('weightInput').classList.remove('error');
+  document.getElementById('placeholderMsg').style.display='none';
+  document.getElementById('labelContent').style.display='flex';
+  document.getElementById('printBtn').disabled=false;
+  updatePreview();
+}
+
+function onWeightInput(){
+  document.getElementById('weightError').classList.remove('visible');
+  document.getElementById('weightInput').classList.remove('error');
+  updatePreview();
+}
+
+function generateQR(id,text,size){
+  var el=document.getElementById(id);el.innerHTML='';
+  try{new QRCode(el,{text:text,width:size,height:size,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});}
+  catch(e){console.warn('QR:',e);}
+}
+
+function updatePreview(){
+  if(!currentProduct)return;
+  var weight=document.getElementById('weightInput').value;
+  var batch=batchNum();
+  var pills=ALLERGENS[currentProduct]||[];
+  document.getElementById('lProductName').textContent=currentProduct;
+  document.getElementById('lDate').textContent=displayDate();
+  document.getElementById('lBatch').textContent=batch;
+  document.getElementById('lWeight').textContent=weight?weight+' g':'— mérés után töltsd ki';
+  var alText=pills.length?pills.join(', '):'Nincs allergén';
+  document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
+  document.getElementById('qrText').textContent=batch;
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),70);
+}
+
+function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
+  if(!WEB_APP_URL)return;
+  fetch(WEB_APP_URL,{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'gyartas',flavor:flavorName,batch:batchNumber,weight:weightGrams})
+  }).catch(function(err){console.error(err);});
+}
+
+function showToast(msg){
+  var t=document.getElementById('successToast');t.textContent=msg;t.classList.add('visible');
+  setTimeout(function(){t.classList.remove('visible');},2800);
+}
+
+function resetForm(){
+  currentProduct='';currentCategory='';
+  document.getElementById('csDot').style.background='#404040';
+  var t=document.getElementById('csText');t.textContent='– Válassz terméket –';t.classList.remove('selected');
+  document.querySelectorAll('.cs-option').forEach(function(el){el.classList.remove('selected');});
+  document.getElementById('weightInput').value='';
+  document.getElementById('weightInput').classList.remove('error');
+  document.getElementById('weightError').classList.remove('visible');
+  document.getElementById('allergenDisplay').innerHTML='<span style="color:#333;font-size:12px;">–</span>';
+  document.getElementById('placeholderMsg').style.display='flex';
+  document.getElementById('labelContent').style.display='none';
+  document.getElementById('printBtn').disabled=true;
+  document.getElementById('batchDisplay').textContent='— válassz terméket';
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!document.getElementById('csDropdown').classList.contains('open')){
+    var btn=document.getElementById('printBtn');if(!btn.disabled)printLabel();
+  }
+});
+
+function printLabel(){
+  if(!currentProduct)return;
+  var weight=document.getElementById('weightInput').value;
+  var wn=parseInt(weight);
+  if(!weight||isNaN(wn)||wn<=0){
+    document.getElementById('weightError').classList.add('visible');
+    document.getElementById('weightInput').classList.add('error');
+    document.getElementById('weightInput').focus();return;
+  }
+  var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
+  var wText=weight+' g',formUrl=buildFormUrl(batch,currentProduct,weight),snap=currentProduct;
+
+  var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(tmp);
+
+  function done(batch){
+    todayCount++;document.getElementById('todayCount').textContent=todayCount;
+    try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){}
+    seqNum++;document.getElementById('seqDisplay').textContent=p2(seqNum);
+    sendToKitchenInventory(snap,batch,weight);
+    showToast('✅ Nyomtatva — '+batch);resetForm();
+  }
+
+  try{
+    new QRCode(tmp,{text:formUrl,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+    setTimeout(function(){
+      var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
+      document.body.removeChild(tmp);
+      var w=openPrint(batch,pills,wText,qr,snap);
+      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');}
+    },200);
+  }catch(e){
+    document.body.removeChild(tmp);
+    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);
+  }
+}
+
+function openPrint(batch,pills,wText,qrUrl,prod){
+  var allergenText=pills.length?pills.join(', '):'Nincs allergén';
+  var alClass=pills.length?'al':'al none';
+  var today=displayDate();
+  var h='<!DOCTYPE html><html lang="hu"><head><meta charset="UTF-8"><style>'
+    +'@import url(\'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap\');'
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:\'DM Sans\',Arial,sans-serif;margin:0;padding:0;display:flex;justify-content:center;}'
+    +'.label{width:62mm;height:80mm;display:flex;flex-direction:column;overflow:hidden;}'
+    +'.lh{background:#111;color:#fff;padding:1.5mm 2.5mm;}'
+    +'.lh-b{font-size:8pt;font-weight:800;letter-spacing:0.3px;}'
+    +'.lh-a{font-size:5pt;color:#aaa;margin-top:0.3mm;}'
+    +'.lb{padding:2mm 2.5mm;display:flex;gap:2mm;flex:1;align-items:flex-start;}'
+    +'.li{flex:1;min-width:0;}'
+    +'.l-name{font-size:10pt;font-weight:800;margin-bottom:1.5mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;}'
+    +'.r{margin-bottom:1mm;}'
+    +'.rl{font-size:4.5pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.3mm;font-family:\'DM Mono\',Consolas,monospace;}'
+    +'.rv{font-size:7.5pt;}'
+    +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:7pt;font-weight:600;}'
+    +'.al{font-size:6.5pt;font-weight:700;color:#856404;line-height:1.3;}'
+    +'.al.none{color:#155724;}'
+    +'.qrs{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}'
+    +'.qrs img{width:25mm;height:25mm;display:block;}'
+    +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:5pt;color:#aaa;text-align:center;margin-top:0.5mm;}'
+    +'.lf{background:#f5f5f5;padding:1mm 2.5mm;font-size:4.5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
+    +'@media print{@page{margin:0;size:62mm 80mm;}}'
+    +'</style></head><body>'
+    +'<div class="label">'
+    +'<div class="lh"><div class="lh-b">IL BRUNO ITALIANO KFT.</div><div class="lh-a">1036 Budapest, Lajos u. 70-72.</div></div>'
+    +'<div class="lb"><div class="li">'
+    +'<div class="l-name">'+prod+'</div>'
+    +'<div class="r"><span class="rl">Allergének</span><span class="'+alClass+'">'+allergenText+'</span></div>'
+    +'<div class="r"><span class="rl">Súly</span><span class="rv" style="font-weight:800;">'+wText+'</span></div>'
+    +'<div class="r"><span class="rl">Gyártási szám</span><span class="rb">'+batch+'</span></div>'
+    +'<div class="r"><span class="rl">Dátum</span><span class="rv">'+today+'</span></div>'
+    +'</div>'
+    +'<div class="qrs">'
+    +(qrUrl?'<img src="'+qrUrl+'">':'')
+    +'<div class="qrt">'+batch+'</div>'
+    +'</div></div>'
+    +'<div class="lf">Szav.: gyártástól 20 nap &nbsp;|&nbsp; −15 °C alatt tartandó</div>'
+    +'</div>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>'
+    +'</body></html>';
+  var w=window.open('','_blank','width=320,height=420');
+  if(w){w.document.write(h);w.document.close();}
+  return w;
+}
+</script>
+</body>
+</html>
