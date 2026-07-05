@@ -131,7 +131,7 @@
     .l-batch{font-size:15pt!important;}
     .l-details{display:flex!important;flex-wrap:wrap;justify-content:center!important;gap:1mm 4mm!important;}
     .qr-sec{display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:2mm 0!important;}
-    .qr-sec canvas,.qr-sec img{width:46mm!important;height:46mm!important;}
+    .qr-sec canvas,.qr-sec img{width:54mm!important;height:54mm!important;}
     .qr-tiny{font-size:8pt!important;text-align:center!important;}
     .lf{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#f5f5f5!important;font-size:11pt!important;padding:2mm 4mm!important;text-align:center!important;width:calc(100% + 8mm);margin-left:-4mm;margin-right:-4mm;margin-bottom:-4mm;border-top:0.3mm solid #eee!important;color:#888!important;line-height:1.3!important;}
   }
@@ -571,7 +571,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 4mm;justify-content:center;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm 0;}'
-    +'.qrs img{width:46mm;height:46mm;display:block;}'
+    +'.qrs img{width:54mm;height:54mm;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:8pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;width:calc(100% + 8mm);padding:2mm 4mm;font-size:11pt;color:#888;border-top:0.3mm solid #eee;line-height:1.3;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0 -4mm -4mm -4mm;}'
     +'@media print{@page{margin:0;size:62mm auto;}html,body{width:62mm;margin:0;padding:0;}}'
