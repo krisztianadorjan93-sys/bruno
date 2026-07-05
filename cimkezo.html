@@ -111,7 +111,7 @@
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
 
   @media print{
-    @page{margin:0;size:62mm 100mm;}
+    @page{margin:0;size:62mm auto;}
     html,body{width:62mm;margin:0;padding:0;background:#fff;min-height:auto;}
     .header,.success-toast,.hint-box,.panel-title,#placeholderMsg{display:none!important;}
     .layout{display:block!important;max-width:none;gap:0;padding:0;margin:0;}
@@ -523,7 +523,7 @@ function printLabel(){
   }
 
   try{
-    new QRCode(tmp,{text:formUrl,width:400,height:400,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+    new QRCode(tmp,{text:formUrl,width:600,height:600,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
     setTimeout(function(){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
@@ -545,23 +545,23 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:\'DM Sans\',Arial,sans-serif;margin:0;padding:0;display:flex;justify-content:center;}'
     +'.label{width:62mm;display:flex;flex-direction:column;page-break-inside:avoid;break-inside:avoid;}'
-    +'.lh{background:#111;color:#fff;padding:1.5mm 2.5mm;}'
-    +'.lh-b{font-size:9pt;font-weight:800;letter-spacing:0.3px;}'
-    +'.lh-a{font-size:5.5pt;color:#aaa;margin-top:0.3mm;}'
-    +'.lb{padding:2mm 2.5mm 1mm;display:flex;flex-direction:column;}'
-    +'.l-name{font-size:12pt;font-weight:800;margin-bottom:1mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;}'
-    +'.r{margin-bottom:0.5mm;}'
-    +'.rl{font-size:5pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.2mm;font-family:\'DM Mono\',Consolas,monospace;}'
-    +'.rv{font-size:8pt;}'
-    +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:8pt;font-weight:600;}'
-    +'.al{font-size:7pt;font-weight:700;color:#856404;line-height:1.3;}'
+    +'.lh{background:#111;color:#fff;padding:2mm 3mm;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'.lh-b{font-size:11pt;font-weight:800;letter-spacing:0.3px;}'
+    +'.lh-a{font-size:6.5pt;color:#aaa;margin-top:0.3mm;}'
+    +'.lb{padding:2.5mm 3mm 1.5mm;display:flex;flex-direction:column;}'
+    +'.l-name{font-size:14pt;font-weight:800;margin-bottom:1.5mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;}'
+    +'.r{margin-bottom:0.8mm;}'
+    +'.rl{font-size:6pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.2mm;font-family:\'DM Mono\',Consolas,monospace;}'
+    +'.rv{font-size:9pt;}'
+    +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:9pt;font-weight:600;}'
+    +'.al{font-size:8pt;font-weight:700;color:#856404;line-height:1.3;}'
     +'.al.none{color:#155724;}'
-    +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 3mm;}'
-    +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1mm 0;}'
-    +'.qrs img{width:35mm;height:35mm;display:block;}'
-    +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:6pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
-    +'.lf{background:#f5f5f5;padding:2mm 2.5mm;font-size:7pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;}'
-    +'@media print{@page{margin:0;size:62mm 100mm;}html,body{width:62mm;margin:0;padding:0;}}'
+    +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 4mm;}'
+    +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm 0;}'
+    +'.qrs img{width:45mm;height:45mm;display:block;}'
+    +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:7pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
+    +'.lf{background:#f5f5f5;padding:2mm 3mm;font-size:7.5pt;color:#888;border-top:0.3mm solid #eee;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'@media print{@page{margin:0;size:62mm auto;}html,body{width:62mm;margin:0;padding:0;}}'
     +'</style></head><body>'
     +'<div class="label">'
     +'<div class="lh"><div class="lh-b">IL BRUNO ITALIANO KFT.</div><div class="lh-a">1036 Budapest, Lajos u. 70-72.</div></div>'
