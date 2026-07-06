@@ -460,7 +460,7 @@ function onWeightInput(){
 
 function generateQR(id,text,size){
   var el=document.getElementById(id);el.innerHTML='';
-  try{new QRCode(el,{text:text,width:size,height:size,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});}
+  try{new QRCode(el,{text:text,width:size,height:size,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L,margin:2});}
   catch(e){console.warn('QR:',e);}
 }
 
@@ -476,7 +476,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),400);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),800);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -538,7 +538,7 @@ function printLabel(){
   }
 
   try{
-    new QRCode(tmp,{text:formUrl,width:900,height:900,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+    new QRCode(tmp,{text:formUrl,width:1200,height:1200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L,margin:2});
     setTimeout(function(){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
