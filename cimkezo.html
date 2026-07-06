@@ -92,7 +92,7 @@
   .hint-box{margin-top:13px;padding:11px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;font-size:10px;color:#484848;line-height:2.2;font-family:'DM Mono',Consolas,monospace;}
 
   /* LABEL PREVIEW — 62×80mm Brother QL-800 */
-  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:hidden;max-width:260px;display:flex;flex-direction:column;border:1px solid #333;}
+  .label-wrap{background:#fff;color:#000;border-radius:8px;overflow:visible;max-width:none;display:flex;flex-direction:column;border:1px solid #333;}
   .lh{background:#111;color:#fff;padding:5px 9px;}
   .lh-brand{font-size:11px;font-weight:800;letter-spacing:0.3px;}
   .lh-addr{font-size:7px;color:#888;margin-top:1px;}
@@ -106,7 +106,8 @@
   .l-allergen-text{font-size:8px;font-weight:700;color:#856404;line-height:1.2;}
   .l-allergen-text.none{color:#155724;}
   .lf{background:#f5f5f5;padding:8px 9px;font-size:8px;color:#888;border-top:1px solid #eee;line-height:1.4;}
-  .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;}
+  .qr-sec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;background:#fff;}
+  .qr-sec canvas,.qr-sec img{display:block;}
   .qr-tiny{font-family:Consolas,monospace;font-size:7px;color:#aaa;text-align:center;margin-top:2px;}
   .placeholder{display:flex;align-items:center;justify-content:center;flex:1;color:#555;font-size:13px;text-align:center;padding:20px;line-height:1.8;}
 
@@ -124,14 +125,15 @@
     .lh-addr{font-size:9pt!important;color:#aaa!important;}
     .lb{display:block!important;padding:2mm 0!important;width:100%;text-align:center;}
     .li{display:block!important;}
-    .l-name{font-size:24pt!important;font-weight:800!important;margin-bottom:1.5mm!important;padding-bottom:1mm!important;text-align:center!important;line-height:1.15!important;border-bottom:0.3mm solid #ddd!important;}
-    .l-row{font-size:15pt!important;text-align:center!important;}
-    .l-row strong{font-size:8pt!important;display:block!important;color:#999!important;}
-    .l-allergen-text{font-size:13pt!important;}
-    .l-batch{font-size:15pt!important;}
+    .l-name{font-size:20pt!important;font-weight:800!important;margin-bottom:1mm!important;padding-bottom:1mm!important;text-align:center!important;line-height:1.15!important;border-bottom:0.3mm solid #ddd!important;}
+    .l-row{font-size:13pt!important;text-align:center!important;}
+    .l-row strong{font-size:7pt!important;display:block!important;color:#999!important;}
+    .l-allergen-text{font-size:11pt!important;}
+    .l-batch{font-size:13pt!important;}
     .l-details{display:flex!important;flex-wrap:wrap;justify-content:center!important;gap:1mm 4mm!important;}
-    .qr-sec{display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:2mm 0!important;}
-    .qr-sec canvas,.qr-sec img{width:54mm!important;height:54mm!important;}
+    .qr-sec{display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:4mm 0!important;background:#fff!important;}
+    .qr-sec canvas,.qr-sec img{width:48mm!important;height:48mm!important;max-width:none!important;display:block!important;}
+    #qrcode-preview,#qrcode-preview img,#qrcode-preview canvas{width:48mm!important;height:48mm!important;max-width:none!important;}
     .qr-tiny{font-size:8pt!important;text-align:center!important;}
     .lf{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#f5f5f5!important;font-size:11pt!important;padding:2mm 4mm!important;text-align:center!important;width:calc(100% + 8mm);margin-left:-4mm;margin-right:-4mm;margin-bottom:-4mm;border-top:0.3mm solid #eee!important;color:#888!important;line-height:1.3!important;}
   }
@@ -474,7 +476,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),160);
+  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),400);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
@@ -536,7 +538,7 @@ function printLabel(){
   }
 
   try{
-    new QRCode(tmp,{text:formUrl,width:600,height:600,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+    new QRCode(tmp,{text:formUrl,width:900,height:900,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
     setTimeout(function(){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
@@ -562,16 +564,16 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.lh-b{font-size:13pt;font-weight:800;letter-spacing:0.3px;}'
     +'.lh-a{font-size:9pt;color:#aaa;margin-top:0.5mm;}'
     +'.lb{padding:2mm 0;display:flex;flex-direction:column;align-items:center;width:100%;}'
-    +'.l-name{font-size:24pt;font-weight:800;margin-bottom:1.5mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;width:100%;word-wrap:break-word;overflow-wrap:break-word;}'
-    +'.r{margin-bottom:0.8mm;}'
-    +'.rl{font-size:8pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.3mm;font-family:\'DM Mono\',Consolas,monospace;}'
-    +'.rv{font-size:15pt;}'
-    +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:15pt;font-weight:600;}'
-    +'.al{font-size:13pt;font-weight:700;color:#856404;line-height:1.2;}'
+    +'.l-name{font-size:20pt;font-weight:800;margin-bottom:1mm;padding-bottom:1mm;border-bottom:0.3mm solid #ddd;line-height:1.15;width:100%;word-wrap:break-word;overflow-wrap:break-word;}'
+    +'.r{margin-bottom:0.5mm;}'
+    +'.rl{font-size:7pt;text-transform:uppercase;letter-spacing:0.3mm;color:#999;display:block;margin-bottom:0.3mm;font-family:\'DM Mono\',Consolas,monospace;}'
+    +'.rv{font-size:13pt;}'
+    +'.rb{font-family:\'DM Mono\',Consolas,monospace;font-size:13pt;font-weight:600;}'
+    +'.al{font-size:11pt;font-weight:700;color:#856404;line-height:1.2;}'
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 4mm;justify-content:center;}'
-    +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm 0;}'
-    +'.qrs img{width:54mm;height:54mm;display:block;}'
+    +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4mm 0;background:#fff;}'
+    +'.qrs img{width:48mm!important;height:48mm!important;max-width:none!important;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:8pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;width:calc(100% + 8mm);padding:2mm 4mm;font-size:11pt;color:#888;border-top:0.3mm solid #eee;line-height:1.3;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0 -4mm -4mm -4mm;}'
     +'@media print{@page{margin:0;size:62mm auto;}html,body{width:62mm;margin:0;padding:0;}}'
