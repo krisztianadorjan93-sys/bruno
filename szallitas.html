@@ -179,27 +179,52 @@ function renderItems(){
 
 function closeDelivery(){
   if(items.length===0)return;
+  document.getElementById('closeBtn').disabled=true;
+  document.getElementById('closeBtn').textContent='Feldolgozás...';
   var sn=slN();
   var payload={store:store,slNum:sn,items:items.map(function(it){return{flavor:it.f,batch:it.b,weight:it.w};})};
+  function onOk(result){
+    if(result&&result.ok===false){
+      var msg='';
+      if(result.rejected){
+        result.rejected.forEach(function(r){msg+=r.flavor+' ('+r.batch+'): '+r.error+'\n';});
+      } else {
+        msg=result.error||'Ismeretlen hiba';
+      }
+      alert(msg);
+      document.getElementById('closeBtn').disabled=false;
+      document.getElementById('closeBtn').textContent='Szállítás lezárása → Szállítólevél generálás';
+      return;
+    }
+    buildSLDoc(sn);
+    document.getElementById('hstat').textContent='Lezarva: '+sn;
+    document.getElementById('hstat').classList.remove('on');
+    slSeq++;
+    show('s3');
+    toast('Szállítólevél kész!');
+  }
+  function onErr(e){
+    toast('Hiba: '+(e.message||e));
+    document.getElementById('closeBtn').disabled=false;
+    document.getElementById('closeBtn').textContent='Szállítás lezárása → Szállítólevél generálás';
+  }
   if(gsrWorks){
     try{
-      google.script.run
-        .withSuccessHandler(function(r){toast('Szerver OK: mentve + email!');})
-        .withFailureHandler(function(e){toast('GSR hiba: '+(e.message||e));})
-        .gsProcessDelivery(payload);
-    }catch(ex){toast('GSR exception: '+ex.message);fetchSend(payload);}
+      google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr).gsProcessDelivery(payload);
+    }catch(ex){fetchSend(payload,onOk,onErr);}
   } else {
-    fetchSend(payload);
+    fetchSend(payload,onOk,onErr);
   }
-  buildSLDoc(sn);
-  document.getElementById('hstat').textContent='Lezarva: '+sn;
-  document.getElementById('hstat').classList.remove('on');
-  slSeq++;
-  show('s3');
 }
-function fetchSend(payload){
+function fetchSend(payload,onOk,onErr){
   payload.action='szallitas_lezaras';
-  fetch(DEPLOY_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(){toast('Fetch elkuldve');}).catch(function(e){toast('Fetch hiba: '+e);});
+  fetch(DEPLOY_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(data){onOk(data);})
+    .catch(function(e){
+      if(onErr)onErr(e);
+      else toast('Fetch hiba: '+e);
+    });
 }
 
 function buildSLDoc(sn){

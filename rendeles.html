@@ -228,21 +228,37 @@ function submit(){
   var notes=document.getElementById('notesField').value.trim();
   var items=[];Object.keys(order).forEach(function(f){items.push({flavor:f,qty:order[f]});});
   var payload={action:'rendeles',store:selectedStore,day:selectedDay,date:new Date().toISOString().split('T')[0],notes:notes,items:items};
+  document.getElementById('submitBtn').disabled=true;
+  document.getElementById('submitBtn').textContent='Küldés...';
+  var itemsStr=items.map(function(i){return i.qty+'x '+i.flavor;}).join(', ');
+  function onOk(result){
+    if(result&&result.ok===false){
+      toast('⚠ A rendelés NEM ment el: '+(result.error||'próbáld újra.'),'err');
+      document.getElementById('submitBtn').disabled=false;
+      document.getElementById('submitBtn').textContent='Rendelés →';
+      return;
+    }
+    document.getElementById('successInfo').textContent='✓ Rendelés rögzítve: '+itemsStr+' — '+selectedStore+', '+selectedDay;
+    document.getElementById('successS').classList.add('s');
+    toast('Rendelés rögzítve!','ok');
+  }
+  function onErr(e){
+    toast('⚠ A rendelés NEM ment el, próbáld újra.','err');
+    document.getElementById('submitBtn').disabled=false;
+    document.getElementById('submitBtn').textContent='Rendelés →';
+  }
   if(gsrWorks){
     try{
-      google.script.run
-        .withSuccessHandler(function(r){toast('Rendeles mentve!','ok');})
-        .withFailureHandler(function(e){toast('GSR hiba: '+(e.message||e),'err');fetchRendeles(payload);})
-        .gsProcessRendeles(payload);
-    }catch(ex){fetchRendeles(payload);}
-  } else {fetchRendeles(payload);}
-  var t=0;Object.keys(order).forEach(function(f){t+=order[f];});
-  document.getElementById('successInfo').textContent=selectedStore+' - '+t+' tub - '+selectedDay+'i szallitas';
-  document.getElementById('successS').classList.add('s');
+      google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr).gsProcessRendeles(payload);
+    }catch(ex){fetchRendeles(payload,onOk,onErr);}
+  } else {fetchRendeles(payload,onOk,onErr);}
 }
-function fetchRendeles(payload){
+function fetchRendeles(payload,onOk,onErr){
   payload.action='rendeles';
-  fetch(DEPLOY_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(){toast('Fetch elkuldve','ok');}).catch(function(e){toast('Fetch hiba: '+e,'err');});
+  fetch(DEPLOY_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(data){onOk(data);})
+    .catch(function(e){if(onErr)onErr(e);else toast('Fetch hiba: '+e,'err');});
 }
 
 function reset(){
