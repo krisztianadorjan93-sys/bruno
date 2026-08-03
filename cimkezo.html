@@ -481,12 +481,12 @@ function updatePreview(){
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
-  if(!WEB_APP_URL)return;
-  fetch(WEB_APP_URL,{
-    method:'POST',mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
+  if(!WEB_APP_URL)return Promise.resolve(false);
+  return fetch(WEB_APP_URL,{
+    method:'POST',redirect:'follow',
+    headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'gyartas',flavor:flavorName,batch:batchNumber,weight:weightGrams})
-  }).catch(function(err){console.error(err);});
+  }).then(function(r){return r.json();}).then(function(j){return true;});
 }
 
 function showToast(msg){
@@ -526,7 +526,36 @@ function printLabel(){
   }
   var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
   var wText=weight+' g',formUrl=buildFormUrl(batch,currentProduct,weight),snap=currentProduct;
+  var btn=document.getElementById('printBtn');
+  btn.disabled=true;btn.textContent='Regisztráció...';
 
+  sendToKitchenInventory(snap,batch,weight)
+    .then(function(){doPrint(batch,pills,wText,formUrl,snap);})
+    .catch(function(){
+      btn.disabled=false;btn.textContent='Címke Nyomtatása';
+      showOfflineBlock(batch,pills,wText,formUrl,snap);
+    });
+}
+function showOfflineBlock(batch,pills,wText,formUrl,snap){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:28px;max-width:420px;width:100%;text-align:center;">'
+    +'<div style="font-size:48px;margin-bottom:12px;">🚫</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:10px;">NINCS INTERNETKAPCSOLAT!</div>'
+    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">A címke nem regisztrálható a rendszerben. Ellenőrizd a WiFi-t és próbáld újra.</div>'
+    +'<button id="offRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
+    +'<button id="offForce" style="width:100%;padding:12px;border:2px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:12px;cursor:pointer;font-family:inherit;">Mégis nyomtatok offline — manuálisan pótolom</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+  document.getElementById('offRetry').onclick=function(){
+    document.body.removeChild(ov);printLabel();
+  };
+  document.getElementById('offForce').onclick=function(){
+    document.body.removeChild(ov);doPrint(batch,pills,wText,formUrl,snap);
+  };
+}
+function doPrint(batch,pills,wText,formUrl,snap){
+  var btn=document.getElementById('printBtn');
   var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
   document.body.appendChild(tmp);
 
@@ -534,7 +563,6 @@ function printLabel(){
     todayCount++;document.getElementById('todayCount').textContent=todayCount;
     try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){}
     seqNum++;document.getElementById('seqDisplay').textContent=p2(seqNum);
-    sendToKitchenInventory(snap,batch,weight);
     showToast('✅ Nyomtatva — '+batch);resetForm();
   }
 
@@ -544,11 +572,11 @@ function printLabel(){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
       var w=openPrint(batch,pills,wText,qr,snap);
-      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');}
+      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');btn.disabled=false;btn.textContent='Címke Nyomtatása';}
     },200);
   }catch(e){
     document.body.removeChild(tmp);
-    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);
+    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);else{btn.disabled=false;btn.textContent='Címke Nyomtatása';}
   }
 }
 

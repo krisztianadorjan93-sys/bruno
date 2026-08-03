@@ -103,6 +103,10 @@ optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;
 <div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Akt&#237;v sz&#225;ll&#237;t&#225;s</div><div class="name" id="activeName">&#8211;</div></div>
 <div style="text-align:right;"><div class="count" id="activeCount">0</div><div class="clbl">tub</div></div>
 </div>
+<div class="card" style="border-color:#5a3a1a;">
+<div class="card-t" style="color:#D0783A;">&#128203; F&#252;gg&#337; rendel&#233;sek</div>
+<div id="orderList"><div style="color:#333;text-align:center;padding:10px;font-size:11px;">V&#225;lassz &#252;zletet a rendel&#233;sek bet&#246;lt&#233;s&#233;hez.</div></div>
+</div>
 <div class="card">
 <div class="card-t">T&#233;tel hozz&#225;ad&#225;sa &#8212; szkennel&#233;ssel vagy k&#233;zzel</div>
 <button class="qr-btn" id="qrStartBtn" onclick="startQRScan()">&#128247; QR Szkennel&#233;s</button>
@@ -157,7 +161,32 @@ function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classL
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('v');setTimeout(function(){t.classList.remove('v');},2200);}
 
 function pick(el,s){document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');store=s;document.getElementById('startBtn').disabled=false;}
-function start(){if(!store)return;items=[];document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();show('s2');}
+function start(){if(!store)return;items=[];document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();loadPendingOrders();show('s2');}
+
+function loadPendingOrders(){
+  var el=document.getElementById('orderList');
+  if(!el)return;
+  el.innerHTML='<div style="color:#555;text-align:center;padding:10px;font-size:11px;">Rendelések betöltése...</div>';
+  fetch(DEPLOY_URL+'?action=pendingOrders&store='+encodeURIComponent(store))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data.ok||!data.orders||data.orders.length===0){
+        el.innerHTML='<div style="color:#333;text-align:center;padding:10px;font-size:11px;">Nincs függő rendelés.</div>';
+        return;
+      }
+      var html='';
+      data.orders.forEach(function(o){
+        html+='<div style="display:flex;align-items:center;gap:8px;background:#111;border:1px solid #222;border-radius:6px;padding:8px 10px;margin-bottom:4px;">'
+          +'<div style="font-size:13px;font-weight:600;color:#D0783A;flex:1;">'+o.flavor+'</div>'
+          +'<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;">'+o.qty+' db</div>'
+          +'</div>';
+      });
+      el.innerHTML=html;
+    })
+    .catch(function(){
+      el.innerHTML='<div style="color:#555;text-align:center;padding:10px;font-size:11px;">Nem sikerült betölteni.</div>';
+    });
+}
 
 function addItem(){
   var f=document.getElementById('aF').value,b=document.getElementById('aB').value.trim(),w=document.getElementById('aW').value;
