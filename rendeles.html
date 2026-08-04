@@ -67,10 +67,14 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-heigh
 @keyframes spin{to{transform:rotate(360deg);}}
 .toast{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:7px;font-size:12px;font-weight:600;z-index:300;white-space:nowrap;}
 .toast.v{display:block;}.toast-ok{background:#0a2a0a;border:1px solid #1a5a1a;color:#6aca6a;}.toast-err{background:#2a0a0a;border:1px solid #5a1a1a;color:#ff8888;}
+.netind{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;font-family:monospace;padding:4px 9px;border-radius:20px;background:#1a1a1a;border:1px solid #333;color:#666;}
+.netind .dot{width:8px;height:8px;border-radius:50%;background:#666;flex-shrink:0;}
+.netind.on{color:#5DCAA5;border-color:#0F6E56;background:#04231d;}.netind.on .dot{background:#5DCAA5;}
+.netind.off{color:#ff6666;border-color:#5a1a1a;background:#2a0a0a;}.netind.off .dot{background:#ff3333;}
 </style>
 </head>
 <body>
-<div class="top"><div class="brand">Bruno <span>Rendel&#233;s</span></div><div class="tag" id="storeTag">V&#225;lassz &#252;zletet</div></div>
+<div class="top"><div class="brand">Bruno <span>Rendel&#233;s</span></div><div style="display:flex;align-items:center;gap:8px;"><div class="netind" id="netInd"><span class="dot"></span><span id="netTxt">...</span></div><div class="tag" id="storeTag">V&#225;lassz &#252;zletet</div></div></div>
 <div class="toast toast-ok" id="toast"></div>
 <div class="overlay" id="confirmO"><div class="confirm"><div class="confirm-t">Rendel&#233;s &#246;sszes&#237;t&#337;</div><div id="cStore" style="font-size:11px;color:#666;margin-bottom:10px;"></div><div id="cItems"></div><div id="cNotes" style="font-size:10px;color:#555;margin-top:8px;display:none;"></div><div class="confirm-btns"><button class="cb-n" onclick="closeC()">M&#233;gsem</button><button class="cb-y" onclick="submit()">Rendel&#233;s k&#252;ld&#233;se &#10003;</button></div></div></div>
 <div class="success" id="successS"><div class="success-i">&#9989;</div><div class="success-t">Rendel&#233;s elk&#252;ldve!</div><div class="success-s" id="successInfo"></div><button class="s-btn" onclick="reset()">&#8617; &#218;j rendel&#233;s</button></div>
@@ -330,6 +334,26 @@ function toast(m,type){
   t.className='toast '+(type==='err'?'toast-err':'toast-ok')+' v';
   setTimeout(function(){t.classList.remove('v');},2500);
 }
+
+
+// ── ÁLLANDÓ ONLINE/OFFLINE JELZŐ ───────────────────────────────
+var netOk=null;
+function setNet(ok){
+  if(netOk===ok)return;netOk=ok;
+  var el=document.getElementById('netInd');if(!el)return;
+  el.className='netind '+(ok?'on':'off');
+  document.getElementById('netTxt').textContent=ok?'Online':'Offline';
+}
+function pingServer(){
+  if(navigator.onLine===false){setNet(false);return;}
+  fetch(DEPLOY_URL+'?action=checkBatch&batch=__ping__',{cache:'no-store'})
+    .then(function(r){return r.json();}).then(function(){setNet(true);})
+    .catch(function(){setNet(false);});
+}
+window.addEventListener('online',pingServer);
+window.addEventListener('offline',function(){setNet(false);});
+pingServer();
+setInterval(pingServer,30000);
 
 // Kapcsolat teszt + init
 try{

@@ -480,13 +480,14 @@ function updatePreview(){
   generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),800);
 }
 
-function sendToKitchenInventory(flavorName,batchNumber,weightGrams){
-  if(!WEB_APP_URL)return Promise.resolve(false);
+function sendToKitchenInventory(flavorName,batchNumber,weightGrams,confirmed){
+  if(!WEB_APP_URL)return Promise.reject(new Error('Nincs beállítva a szerver URL'));
   return fetch(WEB_APP_URL,{
     method:'POST',redirect:'follow',
     headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'gyartas',flavor:flavorName,batch:batchNumber,weight:weightGrams})
-  }).then(function(r){return r.json();}).then(function(j){return true;});
+    body:JSON.stringify({action:'gyartas',flavor:flavorName,batch:batchNumber,
+                         weight:weightGrams,confirmed:!!confirmed})
+  }).then(function(r){return r.json();});
 }
 
 function showToast(msg){
@@ -527,14 +528,61 @@ function printLabel(){
   var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
   var wText=weight+' g',formUrl=buildFormUrl(batch,currentProduct,weight),snap=currentProduct;
   var btn=document.getElementById('printBtn');
-  btn.disabled=true;btn.textContent='Regisztráció...';
+  // 5/a) A gomb AZONNAL letiltva, amíg a szerver nem válaszol
+  if(btn.disabled&&btn.dataset.busy==='1')return;
+  btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás...';
 
-  sendToKitchenInventory(snap,batch,weight)
-    .then(function(){doPrint(batch,pills,wText,formUrl,snap);})
-    .catch(function(){
-      btn.disabled=false;btn.textContent='Címke Nyomtatása';
-      showOfflineBlock(batch,pills,wText,formUrl,snap);
-    });
+  function unlock(){btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
+
+  function register(confirmed){
+    btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás...';
+    sendToKitchenInventory(snap,batch,weight,confirmed)
+      .then(function(res){
+        if(res&&res.ok===false){
+          unlock();
+          if(res.needsConfirm){showDuplicateConfirm(res,snap,weight,function(){register(true);});}
+          else{showServerError(res.error||'A szerver elutasította a regisztrációt.');}
+          return;
+        }
+        unlock();
+        doPrint(batch,pills,wText,formUrl,snap);
+      })
+      .catch(function(){
+        unlock();
+        showOfflineBlock(batch,pills,wText,formUrl,snap);
+      });
+  }
+  register(false);
+}
+
+// 5/b) Duplikátum-gyanú — a HELYES út a könnyű, a hibás a nehéz
+function showDuplicateConfirm(res,flavor,weight,onConfirm){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML='<div style="background:#2a1a0a;border:3px solid #854F0B;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
+    +'<div style="font-size:46px;margin-bottom:12px;">\u26A0\uFE0F</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#FAC775;margin-bottom:8px;line-height:1.55;">'+(res.error||'')+'</div>'
+    +(res.prevBatch?'<div style="font-size:12px;color:#a08050;font-family:monospace;margin-bottom:18px;">Korábbi gyártási szám: '+res.prevBatch+'</div>':'<div style="margin-bottom:18px;"></div>')
+    +'<button id="dupCancel" style="width:100%;padding:18px;border:none;border-radius:10px;background:#D0783A;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:14px;font-family:inherit;">Mégsem — nem akartam újra</button>'
+    +'<button id="dupOk" tabindex="-1" style="width:100%;padding:9px;border:1px solid #3a3a3a;border-radius:8px;background:transparent;color:#666;font-size:11px;cursor:pointer;font-family:inherit;opacity:.65;">Igen, tényleg két külön tégely</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+  var cancel=document.getElementById('dupCancel');
+  cancel.focus();  // a HELYES gomb kap fókuszt, így egy véletlen Enter nem erősít meg
+  cancel.onclick=function(){document.body.removeChild(ov);};
+  document.getElementById('dupOk').onclick=function(){document.body.removeChild(ov);onConfirm();};
+}
+
+function showServerError(msg){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
+    +'<div style="font-size:44px;margin-bottom:12px;">\uD83D\uDEAB</div>'
+    +'<div style="font-size:15px;font-weight:700;color:#ff8888;margin-bottom:20px;line-height:1.6;">'+msg+'</div>'
+    +'<button id="seOk" style="width:100%;padding:15px;border:none;border-radius:9px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Értem</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+  document.getElementById('seOk').onclick=function(){document.body.removeChild(ov);};
 }
 function showOfflineBlock(batch,pills,wText,formUrl,snap){
   var ov=document.createElement('div');
@@ -548,7 +596,9 @@ function showOfflineBlock(batch,pills,wText,formUrl,snap){
     +'</div>';
   document.body.appendChild(ov);
   document.getElementById('offRetry').onclick=function(){
-    document.body.removeChild(ov);printLabel();
+    document.body.removeChild(ov);
+    var b=document.getElementById('printBtn');b.disabled=false;b.dataset.busy='';
+    printLabel();
   };
   document.getElementById('offForce').onclick=function(){
     document.body.removeChild(ov);doPrint(batch,pills,wText,formUrl,snap);
@@ -556,6 +606,7 @@ function showOfflineBlock(batch,pills,wText,formUrl,snap){
 }
 function doPrint(batch,pills,wText,formUrl,snap){
   var btn=document.getElementById('printBtn');
+  btn.disabled=true;btn.textContent='Nyomtatás...';
   var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
   document.body.appendChild(tmp);
 
@@ -563,7 +614,9 @@ function doPrint(batch,pills,wText,formUrl,snap){
     todayCount++;document.getElementById('todayCount').textContent=todayCount;
     try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){}
     seqNum++;document.getElementById('seqDisplay').textContent=p2(seqNum);
-    showToast('✅ Nyomtatva — '+batch);resetForm();
+    btn.dataset.busy='';
+    showToast('✅ Rögzítve és nyomtatva — '+batch+' (Konyha +1, Mozgás Log OK)');
+    resetForm();
   }
 
   try{
@@ -572,11 +625,11 @@ function doPrint(batch,pills,wText,formUrl,snap){
       var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
       document.body.removeChild(tmp);
       var w=openPrint(batch,pills,wText,qr,snap);
-      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');btn.disabled=false;btn.textContent='Címke Nyomtatása';}
+      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
     },200);
   }catch(e){
     document.body.removeChild(tmp);
-    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);else{btn.disabled=false;btn.textContent='Címke Nyomtatása';}
+    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);else{btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
   }
 }
 
