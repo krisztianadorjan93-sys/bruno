@@ -189,6 +189,7 @@ function sendExtra(){var m=document.getElementById('xmv').value,h=document.getEl
   if(selOp==='athelyezes'){if(!h){toast('Valaszd ki hova!',1);return}if(h===store){toast('Nem helyezheted at ugyanoda!',1);return}}send(selOp,m,h)}
 
 function send(id,mar,hon){
+  if(navigator.onLine===false){netBlock(function(){send(id,mar,hon);});return;}
   var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
   var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
   if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}
@@ -209,12 +210,33 @@ function send(id,mar,hon){
       showError(status);
     }
   }
-  function onErr(e){showError('Hiba: '+(e.message||e));}
+  function onErr(e){netBlock(function(){send(id,mar,hon);});}
   if(gsrWorks){
     try{
       google.script.run.withSuccessHandler(onResult).withFailureHandler(function(e){toast('GSR hiba, fetch...',1);fetchScannerSubmit(payload,onResult,onErr);}).gsScannerSubmit(payload);
     }catch(ex){fetchScannerSubmit(payload,onResult,onErr);}
   } else {fetchScannerSubmit(payload,onResult,onErr);}
+}
+
+// ── E) INTERNET-HIANY BLOKKOLO JELZES ──────────────────────────
+function netBlock(retryFn){
+  var ov=document.getElementById('netOv');
+  if(!ov){
+    ov=document.createElement('div');ov.id='netOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:400px;width:100%;text-align:center;font-family:inherit;">'
+    +'<div style="font-size:46px;margin-bottom:10px;">🚫</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:12px;line-height:1.3;">NINCS INTERNETKAPCSOLAT!</div>'
+    +'<div style="font-size:14px;color:#f0c0c0;line-height:1.6;margin-bottom:6px;font-weight:700;">A művelet NEM került be a rendszerbe.</div>'
+    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">Próbáld újra, ha van net.</div>'
+    +'<button id="netRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
+    +'<button id="netClose" style="width:100%;padding:12px;border:1px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:13px;cursor:pointer;font-family:inherit;">Bezárás</button>'
+    +'</div>';
+  ov.style.display='flex';
+  document.getElementById('netRetry').onclick=function(){ov.style.display='none';if(retryFn)retryFn();};
+  document.getElementById('netClose').onclick=function(){ov.style.display='none';};
 }
 function showError(msg){
   document.getElementById('st').textContent='HIBA';

@@ -152,7 +152,7 @@ optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;
 var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
 var FORM_BASE='https://docs.google.com/forms/d/e/1FAIpQLSfQ5PvTFHi4We7fDQNwqUjMFPhv46c2NOqRcAVMYuzHR8HgwQ/viewform';
 var ENTRY_UZLET='entry.461433288',ENTRY_IZ='entry.1429792248',ENTRY_BATCH='entry.2015076910',ENTRY_SULY='entry.2000996021';
-var store='',items=[],slSeq=1,gsrWorks=false;
+var store='',items=[],slSeq=1,gsrWorks=false,pendingOrders=[];
 function p2(n){return String(n).padStart(2,'0');}
 function dk(){var d=new Date();return ''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());}
 function dd(){var d=new Date();return d.getFullYear()+'.'+p2(d.getMonth()+1)+'.'+p2(d.getDate());}
@@ -163,41 +163,79 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 function pick(el,s){document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');store=s;document.getElementById('startBtn').disabled=false;}
 function start(){if(!store)return;items=[];document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();loadPendingOrders();show('s2');}
 
+function normFlavor(s){return (s||'').toString().trim().toLowerCase();}
+
 function loadPendingOrders(){
   var el=document.getElementById('orderList');
   if(!el)return;
+  pendingOrders=[];
   el.innerHTML='<div style="color:#555;text-align:center;padding:10px;font-size:11px;">Rendelések betöltése...</div>';
   fetch(DEPLOY_URL+'?action=pendingOrders&store='+encodeURIComponent(store))
     .then(function(r){return r.json();})
     .then(function(data){
-      if(!data.ok||!data.orders||data.orders.length===0){
-        el.innerHTML='<div style="color:#333;text-align:center;padding:10px;font-size:11px;">Nincs függő rendelés.</div>';
-        return;
-      }
-      var html='';
+      if(!data.ok||!data.orders||data.orders.length===0){pendingOrders=[];renderOrders();return;}
+      // Azonos izeket osszevonunk, es nyilvantartjuk mennyi van meg hatra
+      var byFlavor={};
       data.orders.forEach(function(o){
-        html+='<div style="display:flex;align-items:center;gap:8px;background:#111;border:1px solid #222;border-radius:6px;padding:8px 10px;margin-bottom:4px;">'
-          +'<div style="font-size:13px;font-weight:600;color:#D0783A;flex:1;">'+o.flavor+'</div>'
-          +'<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;">'+o.qty+' db</div>'
-          +'</div>';
+        var k=normFlavor(o.flavor);
+        if(!byFlavor[k])byFlavor[k]={flavor:o.flavor,qty:0};
+        byFlavor[k].qty+=(parseInt(o.qty)||1);
       });
-      el.innerHTML=html;
+      pendingOrders=Object.keys(byFlavor).map(function(k){
+        return {flavor:byFlavor[k].flavor,qty:byFlavor[k].qty,left:byFlavor[k].qty};
+      });
+      renderOrders();
     })
     .catch(function(){
-      el.innerHTML='<div style="color:#555;text-align:center;padding:10px;font-size:11px;">Nem sikerült betölteni.</div>';
+      document.getElementById('orderList').innerHTML='<div style="color:#555;text-align:center;padding:10px;font-size:11px;">Nem sikerült betölteni.</div>';
     });
+}
+
+function renderOrders(){
+  var el=document.getElementById('orderList');
+  if(!el)return;
+  if(!pendingOrders.length){
+    el.innerHTML='<div style="color:#333;text-align:center;padding:10px;font-size:11px;">Nincs függő rendelés.</div>';
+    return;
+  }
+  var doneCount=0;
+  el.innerHTML=pendingOrders.map(function(o){
+    var done=o.left<=0;
+    if(done)doneCount++;
+    return '<div style="display:flex;align-items:center;gap:8px;background:'+(done?'#0a1a0a':'#111')+';border:1px solid '+(done?'#1a4a1a':'#222')+';border-radius:6px;padding:8px 10px;margin-bottom:4px;opacity:'+(done?'0.55':'1')+';">'
+      +'<div style="font-size:13px;flex:1;'+(done?'color:#5a9a5a;text-decoration:line-through;':'color:#D0783A;font-weight:600;')+'">'+o.flavor+'</div>'
+      +(done
+        ? '<div style="font-size:14px;color:#5a9a5a;font-weight:700;">✓ megvan</div>'
+        : '<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;">'+o.left+' / '+o.qty+' db</div>')
+      +'</div>';
+  }).join('');
+  if(doneCount===pendingOrders.length){
+    el.innerHTML+='<div style="text-align:center;padding:8px;font-size:11px;color:#5a9a5a;font-weight:700;">✓ Minden rendelt tétel megvan</div>';
+  }
+}
+
+// Egy tub hozzaadasa/torlese eseten frissitjuk a hatralevo darabszamot
+function bumpOrder(flavor,delta){
+  var k=normFlavor(flavor);
+  for(var i=0;i<pendingOrders.length;i++){
+    if(normFlavor(pendingOrders[i].flavor)===k){
+      pendingOrders[i].left=Math.max(0,Math.min(pendingOrders[i].qty,pendingOrders[i].left+delta));
+      renderOrders();return;
+    }
+  }
 }
 
 function addItem(){
   var f=document.getElementById('aF').value,b=document.getElementById('aB').value.trim(),w=document.getElementById('aW').value;
   if(!f||!b||!w){toast('Toltsd ki az osszes mezot!');return;}
   items.push({f:f,b:b,w:w});
+  bumpOrder(f,-1);
   document.getElementById('aF').value='';document.getElementById('aB').value='';document.getElementById('aW').value='';
   document.getElementById('activeCount').textContent=items.length;
   document.getElementById('closeBtn').disabled=false;
   renderItems();toast(f+' hozzaadva');
 }
-function removeItem(i){items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();}
+function removeItem(i){if(items[i])bumpOrder(items[i].f,1);items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();}
 function renderItems(){
   var el=document.getElementById('itemList');
   if(items.length===0){el.innerHTML='<div class="empty">Meg nincs tetel.<br>Szkenneld be vagy add hozza a fagyikat.</div>';return;}
@@ -208,6 +246,7 @@ function renderItems(){
 
 function closeDelivery(){
   if(items.length===0)return;
+  if(navigator.onLine===false){netBlock(closeDelivery);return;}
   document.getElementById('closeBtn').disabled=true;
   document.getElementById('closeBtn').textContent='Feldolgozás...';
   var sn=slN();
@@ -233,9 +272,9 @@ function closeDelivery(){
     toast('Szállítólevél kész!');
   }
   function onErr(e){
-    toast('Hiba: '+(e.message||e));
     document.getElementById('closeBtn').disabled=false;
     document.getElementById('closeBtn').textContent='Szállítás lezárása → Szállítólevél generálás';
+    netBlock(closeDelivery);
   }
   if(gsrWorks){
     try{
@@ -244,6 +283,27 @@ function closeDelivery(){
   } else {
     fetchSend(payload,onOk,onErr);
   }
+}
+
+// ── E) INTERNET-HIANY BLOKKOLO JELZES ──────────────────────────
+function netBlock(retryFn){
+  var ov=document.getElementById('netOv');
+  if(!ov){
+    ov=document.createElement('div');ov.id='netOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:400px;width:100%;text-align:center;font-family:inherit;">'
+    +'<div style="font-size:46px;margin-bottom:10px;">🚫</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:12px;line-height:1.3;">NINCS INTERNETKAPCSOLAT!</div>'
+    +'<div style="font-size:14px;color:#f0c0c0;line-height:1.6;margin-bottom:6px;font-weight:700;">A művelet NEM került be a rendszerbe.</div>'
+    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">Próbáld újra, ha van net.</div>'
+    +'<button id="netRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
+    +'<button id="netClose" style="width:100%;padding:12px;border:1px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:13px;cursor:pointer;font-family:inherit;">Bezárás</button>'
+    +'</div>';
+  ov.style.display='flex';
+  document.getElementById('netRetry').onclick=function(){ov.style.display='none';if(retryFn)retryFn();};
+  document.getElementById('netClose').onclick=function(){ov.style.display='none';};
 }
 function fetchSend(payload,onOk,onErr){
   payload.action='szallitas_lezaras';

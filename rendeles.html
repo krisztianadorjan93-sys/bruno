@@ -99,7 +99,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-heigh
 <div class="bottom"><div style="flex:1;"><div class="b-total" id="totalCount">0</div><div class="b-label">tub rendelve</div></div><button class="b-btn" id="submitBtn" onclick="showC()" disabled>Rendel&#233;s &#8594;</button></div>
 
 <script>
-var selectedStore='',selectedDay='',order={},allFlavors={},loadedFlavors=[],gsrWorks=false;
+var selectedStore='',selectedDay='',order={},allFlavors={},loadedFlavors=[],gsrWorks=false,storeStock={};
 var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
 
 // \u00CDzek bet\u00F6lt\u00E9se a Sheet-b\u0151l
@@ -204,9 +204,26 @@ function pickStore(el,s){
   el.classList.add('a');selectedStore=s;
   document.getElementById('storeTag').textContent=s;document.getElementById('storeTag').classList.add('on');
   order={}; // Rendel\u00E9s t\u00F6rl\u00E9se \u00FCzletv\u00E1lt\u00E1skor
+  loadStoreStock();
   if(allFlavors[s]){loadedFlavors=allFlavors[s];renderFlavors();}
   else{loadFlavors();}
   upd();
+}
+
+// D) Bontatlan k\u00E9szlet lek\u00E9rdez\u00E9se az adott \u00FCzletre
+function loadStoreStock(){
+  storeStock={};
+  if(!selectedStore)return;
+  fetch(DEPLOY_URL+'?action=storeStock&store='+encodeURIComponent(selectedStore))
+    .then(function(r){return r.json();})
+    .then(function(d){if(d&&d.ok&&d.stock)storeStock=d.stock;})
+    .catch(function(){storeStock={};});
+}
+function stockOf(flavor){
+  if(storeStock[flavor]!==undefined)return parseInt(storeStock[flavor])||0;
+  var k=(flavor||'').trim().toLowerCase();
+  for(var n in storeStock){if(n.trim().toLowerCase()===k)return parseInt(storeStock[n])||0;}
+  return 0;
 }
 function pickDay(el,d){document.querySelectorAll('.day-btn').forEach(function(b){b.classList.remove('a');});el.classList.add('a');selectedDay=d;upd();}
 
@@ -214,8 +231,22 @@ function showC(){
   if(!selectedStore||!selectedDay)return;
   var t=0;Object.keys(order).forEach(function(f){t+=order[f];});if(t===0)return;
   document.getElementById('cStore').textContent=selectedStore+' > '+selectedDay+'i szallitas';
-  var h='';Object.keys(order).forEach(function(f){h+='<div class="confirm-r"><span>'+f+'</span><span class="confirm-q">'+order[f]+' db</span></div>';});
+  var h='',warns=[];
+  Object.keys(order).forEach(function(f){
+    var have=stockOf(f);
+    if(have>0)warns.push({flavor:f,have:have});
+    h+='<div class="confirm-r"><span>'+f+(have>0?' <span style="color:#FAC775;font-size:10px;">\u26A0 '+have+' bontatlan</span>':'')+'</span><span class="confirm-q">'+order[f]+' db</span></div>';
+  });
   h+='<div class="confirm-r" style="font-weight:700;border-top:2px solid #333;padding-top:8px;margin-top:4px;"><span>\u00D6sszesen</span><span class="confirm-q">'+t+' db</span></div>';
+  if(warns.length){
+    var wh='<div style="background:#2a1a0a;border:2px solid #854F0B;border-radius:10px;padding:12px;margin-top:12px;">'
+      +'<div style="font-size:13px;font-weight:800;color:#FAC775;margin-bottom:8px;">\u26A0\uFE0F FIGYELEM \u2014 van m\u00E9g bontatlan az \u00FCzletben</div>';
+    warns.forEach(function(w){
+      wh+='<div style="font-size:12px;color:#e0c090;line-height:1.7;">\u2022 <b>'+w.flavor+'</b> \u2014 m\u00E1r van <b>'+w.have+' db</b> bontatlan ebb\u0151l</div>';
+    });
+    wh+='<div style="font-size:11px;color:#a08050;margin-top:8px;">Biztos, hogy rendelsz m\u00E9g?</div></div>';
+    h+=wh;
+  }
   document.getElementById('cItems').innerHTML=h;
   var notes=document.getElementById('notesField').value.trim();
   var nd=document.getElementById('cNotes');if(notes){nd.textContent='Megjegyz\u00E9s: '+notes;nd.style.display='block';}else nd.style.display='none';
@@ -225,6 +256,7 @@ function closeC(){document.getElementById('confirmO').classList.remove('s');}
 
 function submit(){
   closeC();
+  if(navigator.onLine===false){netBlock(submit);return;}
   var notes=document.getElementById('notesField').value.trim();
   var items=[];Object.keys(order).forEach(function(f){items.push({flavor:f,qty:order[f]});});
   var payload={action:'rendeles',store:selectedStore,day:selectedDay,date:new Date().toISOString().split('T')[0],notes:notes,items:items};
@@ -243,15 +275,36 @@ function submit(){
     toast('Rendelés rögzítve!','ok');
   }
   function onErr(e){
-    toast('⚠ A rendelés NEM ment el, próbáld újra.','err');
     document.getElementById('submitBtn').disabled=false;
     document.getElementById('submitBtn').textContent='Rendelés →';
+    netBlock(submit);
   }
   if(gsrWorks){
     try{
       google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr).gsProcessRendeles(payload);
     }catch(ex){fetchRendeles(payload,onOk,onErr);}
   } else {fetchRendeles(payload,onOk,onErr);}
+}
+
+// ── E) INTERNET-HIANY BLOKKOLO JELZES ──────────────────────────
+function netBlock(retryFn){
+  var ov=document.getElementById('netOv');
+  if(!ov){
+    ov=document.createElement('div');ov.id='netOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:400px;width:100%;text-align:center;font-family:inherit;">'
+    +'<div style="font-size:46px;margin-bottom:10px;">🚫</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:12px;line-height:1.3;">NINCS INTERNETKAPCSOLAT!</div>'
+    +'<div style="font-size:14px;color:#f0c0c0;line-height:1.6;margin-bottom:6px;font-weight:700;">A művelet NEM került be a rendszerbe.</div>'
+    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">Próbáld újra, ha van net.</div>'
+    +'<button id="netRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
+    +'<button id="netClose" style="width:100%;padding:12px;border:1px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:13px;cursor:pointer;font-family:inherit;">Bezárás</button>'
+    +'</div>';
+  ov.style.display='flex';
+  document.getElementById('netRetry').onclick=function(){ov.style.display='none';if(retryFn)retryFn();};
+  document.getElementById('netClose').onclick=function(){ov.style.display='none';};
 }
 function fetchRendeles(payload,onOk,onErr){
   payload.action='rendeles';
