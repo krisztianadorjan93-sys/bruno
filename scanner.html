@@ -90,7 +90,6 @@ optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
 
 <script>
 var D={},selOp='',store='',gsrWorks=false;
-var SZALLITAS_URL='https://krisztianadorjan93-sys.github.io/bruno/szallitas.html';
 var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
 
 var qrInst=null,camActive=false;
@@ -207,10 +206,10 @@ function showOps(state){
   // KONYHÁN: SEMMILYEN műveleti gomb, csak átlépő link a Szállításra
   if(base==='KONYH\u00C1N'){
     document.getElementById('ops').innerHTML=
-      '<div class="info io" style="font-size:14px;line-height:1.7;"><div>'
-      +'<b>🚚 Ez a tégely a konyhán van — rossz linket használsz.</b><br>'
-      +'Szállításhoz nyisd meg a SZÁLLÍTÁS linket.</div></div>'
-      +'<a href="'+SZALLITAS_URL+'" style="display:block;text-align:center;background:#D0783A;color:#fff;text-decoration:none;padding:16px;border-radius:10px;font-size:15px;font-weight:700;margin-top:8px;">Átlépés a SZÁLLÍTÁS oldalra →</a>';
+      '<div class="info io" style="font-size:14px;line-height:1.75;"><div>'
+      +'<b>\uD83C\uDFED Ez a t\u00E9gely m\u00E9g a konyh\u00E1n van, nem lett kisz\u00E1ll\u00EDtva.</b><br>'
+      +'Sz\u00F3lj a sz\u00E1ll\u00EDt\u00F3nak vagy Rolandnak \u2014 te ezzel most nem tudsz mit csin\u00E1lni.'
+      +'</div></div>';
     document.getElementById('xf').style.display='none';return}
   // ISMERETLEN: nincs GYÁRTÁS bejegyzés -> nem kínálunk üzleti műveletet
   if(base==='ISMERETLEN'){
@@ -256,7 +255,7 @@ function send(id,mar,hon){
     setNet(true);
     if(!r||typeof r!=='object'){showError('Váratlan válasz a szervertől.');return;}
     if(r.ok===false){
-      if(r.wrongTool==='szallitas'){
+      if(r.wrongTool==='konyhan'){
         showWrongTool(r.error);
       } else {
         showError(r.error||'Ismeretlen hiba.');
@@ -280,11 +279,10 @@ function send(id,mar,hon){
     document.getElementById('suc').classList.add('s');
   }
   function showWrongTool(msg){
-    document.getElementById('st').textContent='Rossz eszköz';
+    document.getElementById('st').textContent='Nem v\u00E9grehajthat\u00F3';
     document.getElementById('st').style.color='#FAC775';
     document.getElementById('si').innerHTML=
-      '<div style="background:#412402;border:2px solid #854F0B;border-radius:10px;padding:14px;color:#FAC775;font-size:14px;font-weight:700;line-height:1.6;text-align:left;">'+msg+'</div>'
-      +'<a href="'+SZALLITAS_URL+'" style="display:block;text-align:center;background:#D0783A;color:#fff;text-decoration:none;padding:15px;border-radius:10px;font-size:15px;font-weight:700;margin-top:12px;">Átlépés a SZÁLLÍTÁS oldalra →</a>';
+      '<div style="background:#412402;border:2px solid #854F0B;border-radius:10px;padding:14px;color:#FAC775;font-size:14px;font-weight:700;line-height:1.7;text-align:left;">'+msg+'</div>';
     document.getElementById('suc').classList.add('s');
   }
   function onErr(e){netBlock(function(){send(id,mar,hon);});}
