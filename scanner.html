@@ -47,6 +47,8 @@ select:focus,input:focus{border-color:#D0783A}
 .netind .dot{width:8px;height:8px;border-radius:50%;background:#666;flex-shrink:0}
 .netind.on{color:#5DCAA5;border-color:#0F6E56;background:#04231d}.netind.on .dot{background:#5DCAA5}
 .netind.off{color:#ff6666;border-color:#5a1a1a;background:#2a0a0a}.netind.off .dot{background:#ff3333}
+.fxspin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:fxsp .7s linear infinite;margin-right:8px;vertical-align:-2px}
+@keyframes fxsp{to{transform:rotate(360deg)}}
 #qr-reader{border-radius:10px;overflow:hidden;margin-bottom:12px}
 optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
 </style>
@@ -66,6 +68,10 @@ optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
     <button class="btn bo" onclick="startCam()" style="margin-top:10px">&#128247; QR Szkennel&#233;s</button>
     <input type="file" id="qrFile" accept="image/*" capture="environment" style="display:none" onchange="scanPhoto(this)">
     <div id="qr-reader" style="display:none;margin-top:10px"></div>
+    <div id="zoomWrap" style="display:none;margin-top:8px;">
+      <label style="margin-bottom:4px">Nagy&#237;t&#225;s</label>
+      <input type="range" id="zoomRange" min="1" max="5" step="0.1" value="1" style="width:100%;padding:0;">
+    </div>
     <button class="btn bd" id="qrStopBtn" style="display:none;margin-top:6px" onclick="stopCam()">&#10005; Kamera bez&#225;r&#225;s</button>
   </div>
   <div class="card"><div class="card-t">Vagy k&#233;zzel</div>
@@ -92,6 +98,96 @@ optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
 var D={},selOp='',store='',gsrWorks=false;
 var DEPLOY_URL='https://script.google.com/macros/s/AKfycbyvJXJoFMrqaVCyQP1vTfEFD1Gfp98KmS-X-nyEysThExNpSA-C8CWbPi46V3YDHfqY/exec';
 
+
+// ═══════════════════════════════════════════════════════════════
+//  3) QR ÉRTELMEZÉS — ÚJ RÖVID ÉS RÉGI FORMS URL EGYARÁNT
+//  A már kinyomtatott címkéken a régi, hosszú Forms URL van,
+//  ezért mindkettőt fel kell ismerni. Visszafelé kompatibilis.
+// ═══════════════════════════════════════════════════════════════
+function parseTubQR(text){
+  text=(text||'').toString().trim();
+  if(!text)return null;
+  // ÚJ:  Íz|Gyártási szám|Súly
+  if(text.indexOf('|')!==-1&&text.slice(0,4).toLowerCase()!=='http'){
+    var pp=text.split('|');
+    var r={flavor:(pp[0]||'').trim(),batch:(pp[1]||'').trim(),weight:(pp[2]||'').trim()};
+    return (r.flavor&&r.batch)?r:null;
+  }
+  // RÉGI: Google Forms előkitöltött URL
+  try{
+    var q=new URL(text).searchParams;
+    var o={flavor:(decodeURIComponent(q.get('entry.1429792248')||'')).trim(),
+           batch:(decodeURIComponent(q.get('entry.2015076910')||'')).trim(),
+           weight:(decodeURIComponent(q.get('entry.2000996021')||'')).trim()};
+    return (o.flavor&&o.batch)?o:null;
+  }catch(e){return null;}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  6) TÖBB ÉRZÉKSZERVI VISSZAJELZÉS
+//  A dolgozó ne a képernyőt fürkéssze — érezze és hallja is.
+//  Ez akadályozza meg, hogy visszajelzés híján újra nyomkodjon.
+// ═══════════════════════════════════════════════════════════════
+var _actx=null;
+function _beep(freq,dur,type){
+  try{
+    if(!_actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;_actx=new AC();}
+    if(_actx.state==='suspended'){_actx.resume();}
+    var o=_actx.createOscillator(),g=_actx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,_actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25,_actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,_actx.currentTime+dur);
+    o.connect(g);g.connect(_actx.destination);
+    o.start();o.stop(_actx.currentTime+dur+0.02);
+  }catch(e){}
+}
+function _vibe(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
+
+function fxSuccess(){ _beep(1180,0.09,'sine'); setTimeout(function(){_beep(1560,0.10,'sine');},95); _vibe(200); }
+function fxError(){ _beep(320,0.28,'square'); _vibe([100,50,100]); }
+
+// Teljes képernyős villanás nagy adatokkal
+function flash(ok,title,lines){
+  var el=document.getElementById('fxFlash');
+  if(!el){
+    el=document.createElement('div');el.id='fxFlash';
+    el.style.cssText='position:fixed;inset:0;z-index:100000;display:none;'
+      +'align-items:center;justify-content:center;text-align:center;padding:22px;'
+      +'flex-direction:column;font-family:inherit;';
+    document.body.appendChild(el);
+  }
+  var bg=ok?'rgba(10,90,50,.97)':'rgba(120,15,15,.97)';
+  var mark=ok?'✓':'✕';
+  var h='<div style="font-size:96px;font-weight:900;color:#fff;line-height:1;margin-bottom:14px;">'+mark+'</div>'
+       +'<div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:14px;">'+(title||'')+'</div>';
+  if(lines&&lines.length){
+    h+='<div style="background:rgba(0,0,0,.3);border-radius:14px;padding:16px 20px;max-width:420px;width:100%;">';
+    lines.forEach(function(l){
+      h+='<div style="font-size:'+(l.big?'26px':'15px')+';font-weight:'+(l.big?'800':'600')
+        +';color:#fff;line-height:1.5;'+(l.mono?'font-family:monospace;':'')+'">'+l.text+'</div>';
+    });
+    h+='</div>';
+  }
+  el.style.background=bg;el.innerHTML=h;el.style.display='flex';
+  if(ok)fxSuccess(); else fxError();
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.style.display='none';},ok?900:1600);
+}
+
+// Gomb töltő állapot
+function btnBusy(btn,on,busyLabel){
+  if(!btn)return;
+  if(on){
+    if(!btn.dataset.orig)btn.dataset.orig=btn.innerHTML;
+    btn.disabled=true;
+    btn.innerHTML='<span class="fxspin"></span>'+(busyLabel||'Feldolgozás…');
+  }else{
+    btn.disabled=false;
+    if(btn.dataset.orig){btn.innerHTML=btn.dataset.orig;btn.dataset.orig='';}
+  }
+}
+
 var qrInst=null,camActive=false;
 function startCam(){
   store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
@@ -100,15 +196,31 @@ function startCam(){
   var sb=document.getElementById('qrStopBtn');
   el.style.display='block';sb.style.display='block';
   qrInst.start({facingMode:'environment'},{fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.75);return{width:s,height:s};},experimentalFeatures:{useBarCodeDetectorIfSupported:true},videoConstraints:{facingMode:{exact:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}},
-    function(text){stopCam();parseQR(text);toast('QR beolvasva!',0);},
+    function(text){stopCam();parseQR(text);},
     function(){}
-  ).then(function(){camActive=true;}).catch(function(){
+  ).then(function(){camActive=true;setupZoom();}).catch(function(){
     el.style.display='none';sb.style.display='none';
     document.getElementById('qrFile').click();
   });
 }
+// Zoom — csak ha a kamera tamogatja (html5-qrcode track capabilities)
+function setupZoom(){
+  var wrap=document.getElementById('zoomWrap'),rng=document.getElementById('zoomRange');
+  try{
+    var caps=qrInst.getRunningTrackCapabilities();
+    if(!caps||!caps.zoom){wrap.style.display='none';return;}
+    rng.min=caps.zoom.min||1;rng.max=caps.zoom.max||5;
+    rng.step=caps.zoom.step||0.1;rng.value=caps.zoom.min||1;
+    wrap.style.display='block';
+    rng.oninput=function(){
+      try{qrInst.applyVideoConstraints({advanced:[{zoom:parseFloat(rng.value)}]});}catch(e){}
+    };
+  }catch(e){wrap.style.display='none';}
+}
+
 function stopCam(){
   var el=document.getElementById('qr-reader');var sb=document.getElementById('qrStopBtn');
+  var zw=document.getElementById('zoomWrap');if(zw)zw.style.display='none';
   if(qrInst&&camActive){qrInst.stop().then(function(){camActive=false;el.style.display='none';sb.style.display='none';}).catch(function(){camActive=false;el.style.display='none';sb.style.display='none';});}
   else{el.style.display='none';sb.style.display='none';}
 }
@@ -117,23 +229,29 @@ function scanPhoto(inp){
   var file=inp.files[0];
   toast('Feldolgozas...',0);
   if(!qrInst)qrInst=new Html5Qrcode('qr-reader');
-  qrInst.scanFile(file,false).then(function(text){parseQR(text);toast('QR beolvasva!',0);}).catch(function(){toast('Nem sikerult beolvasni. Probald jobb megvilagitassal vagy ird be kezzel!',1);});
+  qrInst.scanFile(file,false).then(function(text){parseQR(text);}).catch(function(){fxError();toast('Nem sikerult beolvasni. Probald jobb megvilagitassal vagy ird be kezzel!',1);});
   inp.value='';
 }
 
-function parseQR(u){try{var p=new URL(u).searchParams;
-  D={flavor:(decodeURIComponent(p.get('entry.1429792248')||'')).trim(),
-     batch:(decodeURIComponent(p.get('entry.2015076910')||'')).trim(),
-     weight:(decodeURIComponent(p.get('entry.2000996021')||'')).trim()};
-  if(!D.flavor||!D.batch){toast('Ervenytelen QR',1);return;}
+function parseQR(u){
+  var r=parseTubQR(u);
+  if(!r){fxError();toast('Nem Bruno QR / ervenytelen',1);return;}
+  D={flavor:r.flavor,batch:r.batch,weight:r.weight};
   // Minden szkenneléskor ELŐSZÖR net-ellenőrzés
   if(navigator.onLine===false){netBlockScan();return;}
+  flash(true,'QR beolvasva',[
+    {text:D.flavor,big:true},
+    {text:D.batch,mono:true},
+    {text:D.weight?D.weight+' g':'—'}
+  ]);
   showTub();
-}catch(e){toast('Nem Bruno QR',1)}}
+}
 
 function manGo(){store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
   var f=document.getElementById('mf').value,b=document.getElementById('mb').value.trim(),w=document.getElementById('mw').value;
-  if(!f||!b){toast('Iz es gyartasi szam kotelezo!',1);return}D={flavor:f.trim(),batch:b.trim(),weight:(w||'').trim()};showTub()}
+  if(!f||!b){toast('Iz es gyartasi szam kotelezo!',1);return}D={flavor:f.trim(),batch:b.trim(),weight:(w||'').trim()};
+  flash(true,'Adat rögzítve',[{text:D.flavor,big:true},{text:D.batch,mono:true}]);
+  showTub()}
 
 function showTub(){
   // Kozponti kapu: kezi bevitelnel es QR-nel is lefut
@@ -246,23 +364,39 @@ function doCfm(){closeCfm();send(selOp,'','')}
 function sendExtra(){var m=document.getElementById('xmv').value,h=document.getElementById('xhv').value;
   if(selOp==='athelyezes'){if(!h){toast('Valaszd ki hova!',1);return}if(h===store){toast('Nem helyezheted at ugyanoda!',1);return}}send(selOp,m,h)}
 
+var _sending=false;
 function send(id,mar,hon){
+  if(_sending)return;                       // 4a) dupla koppintás elnyelése
   if(navigator.onLine===false){netBlock(function(){send(id,mar,hon);});return;}
+  _sending=true;
+  document.querySelectorAll('.op').forEach(function(b){b.disabled=true;b.style.opacity='.45';});
+  var _sendBtn=document.querySelector('#xf .btn.bo');
+  btnBusy(_sendBtn,true,'Küldés…');
   var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
   var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
   if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}
+  function unlockSend(){
+    _sending=false;
+    document.querySelectorAll('.op').forEach(function(b){b.disabled=false;b.style.opacity='';});
+    btnBusy(_sendBtn,false);
+  }
   function onResult(r){
-    setNet(true);
+    setNet(true);unlockSend();
     if(!r||typeof r!=='object'){showError('Váratlan válasz a szervertől.');return;}
     if(r.ok===false){
       if(r.wrongTool==='konyhan'){
-        showWrongTool(r.error);
+        fxError();showWrongTool(r.error);
       } else {
-        showError(r.error||'Ismeretlen hiba.');
+        fxError();showError(r.error||'Ismeretlen hiba.');
       }
       return;
     }
-    // Sikeres — konkrét, tételes visszaigazolás
+    // Sikeres — nagy zöld villanás + rezgés + hang, majd részletes lista
+    flash(true, r.duplicateIgnored ? 'Már rögzítve volt' : (map[id]||id), [
+      {text:D.flavor,big:true},
+      {text:D.batch,mono:true},
+      {text:store+(D.weight?' · '+D.weight+' g':'')}
+    ]);
     document.getElementById('st').textContent='✓ Rögzítve';
     document.getElementById('st').style.color='#5DCAA5';
     var h='<div style="font-size:15px;color:#fff;font-weight:700;margin-bottom:4px;">'+(map[id]||id)+'</div>'
@@ -285,7 +419,7 @@ function send(id,mar,hon){
       '<div style="background:#412402;border:2px solid #854F0B;border-radius:10px;padding:14px;color:#FAC775;font-size:14px;font-weight:700;line-height:1.7;text-align:left;">'+msg+'</div>';
     document.getElementById('suc').classList.add('s');
   }
-  function onErr(e){netBlock(function(){send(id,mar,hon);});}
+  function onErr(e){unlockSend();fxError();netBlock(function(){send(id,mar,hon);});}
   if(gsrWorks){
     try{
       google.script.run.withSuccessHandler(onResult).withFailureHandler(function(e){toast('GSR hiba, fetch...',1);fetchScannerSubmit(payload,onResult,onErr);}).gsScannerSubmit(payload);

@@ -380,6 +380,18 @@ function buildFormUrl(batch,flavor,weight){
   return FORM_BASE+'?'+p.toString();
 }
 
+// ── 3) RÖVID QR TARTALOM ───────────────────────────────────────
+// Régen a QR a teljes Google Forms URL-t kódolta (~180 karakter),
+// ezért sűrűk és aprók lettek a modulok, és régebbi iPhone-ok nem
+// tudtak rá élesíteni. Most csak a három lényeges mező megy bele
+// (~26 karakter) — azonos fizikai méret mellett a modulok több
+// mint kétszer akkorák.
+// Formátum:  Íz|Gyártási szám|Súly     pl. Pisztacia|20260804-12|5200
+function buildQrPayload(batch,flavor,weight){
+  function clean(v){return (v===null||v===undefined)?'':String(v).replace(/\|/g,'/').trim();}
+  return clean(flavor)+'|'+clean(batch)+'|'+clean(weight);
+}
+
 var currentProduct='',currentCategory='',seqNum=1,todayCount=0;
 var CAT_COLORS={cream:'#D09840',fruit:'#D06080',ice:'#6090D0'};
 
@@ -477,7 +489,7 @@ function updatePreview(){
   var alText=pills.length?pills.join(', '):'Nincs allergén';
   document.getElementById('lAllergens').innerHTML='<span class="l-allergen-text'+(pills.length?'':' none')+'">'+alText+'</span>';
   document.getElementById('qrText').textContent=batch;
-  generateQR('qrcode-preview',buildFormUrl(batch,currentProduct,weight),800);
+  generateQR('qrcode-preview',buildQrPayload(batch,currentProduct,weight),800);
 }
 
 function sendToKitchenInventory(flavorName,batchNumber,weightGrams,confirmed){
@@ -506,7 +518,8 @@ function resetForm(){
   document.getElementById('allergenDisplay').innerHTML='<span style="color:#333;font-size:12px;">–</span>';
   document.getElementById('placeholderMsg').style.display='flex';
   document.getElementById('labelContent').style.display='none';
-  document.getElementById('printBtn').disabled=true;
+  var pb=document.getElementById('printBtn');
+  pb.disabled=true;pb.dataset.busy='';pb.textContent='Címke Nyomtatása';
   document.getElementById('batchDisplay').textContent='— válassz terméket';
 }
 
@@ -525,42 +538,88 @@ function printLabel(){
     document.getElementById('weightInput').classList.add('error');
     document.getElementById('weightInput').focus();return;
   }
-  var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
-  var wText=weight+' g',formUrl=buildFormUrl(batch,currentProduct,weight),snap=currentProduct;
   var btn=document.getElementById('printBtn');
-  // 5/a) A gomb AZONNAL letiltva, amíg a szerver nem válaszol
   if(btn.disabled&&btn.dataset.busy==='1')return;
-  btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás...';
 
+  var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
+  var wText=weight+' g',snap=currentProduct;
+  var qrText=buildQrPayload(batch,currentProduct,weight);
+
+  // ── Offline-védelem: szinkron ellenőrzés, MIELŐTT ablakot nyitnánk
+  if(navigator.onLine===false){
+    showOfflineBlock(batch,pills,wText,qrText,snap);
+    return;
+  }
+
+  // ── 1) A FELUGRÓ ABLAKOT MÉG A KATTINTÁS ESEMÉNYKEZELŐJÉBEN
+  //    nyitjuk meg, szinkron módon, MINDEN await/.then() ELŐTT.
+  //    A böngészők csak közvetlen felhasználói interakcióra
+  //    engedik a window.open()-t; ha előbb szerver-hívást várnánk
+  //    meg, a popup-blokkoló közbelépne és nem lenne fizikai címke.
+  //    Maga a window.print() az ablak saját szkriptjéből fut,
+  //    ezért a duplikátum-védelem sorrendje nem sérül: a címkét
+  //    csak akkor írjuk bele, ha a szerver visszaigazolt.
+  var w=window.open('','_blank','width=320,height=420');
+  if(!w){
+    showServerError('A böngésző blokkolta a felugró ablakot. Engedélyezd a felugró ablakokat ehhez az oldalhoz, és próbáld újra.');
+    return;
+  }
+  writeWaitingPage(w,'Regisztráció folyamatban…',snap,batch);
+
+  btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás…';
   function unlock(){btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
 
   function register(confirmed){
-    btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás...';
+    btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás…';
     sendToKitchenInventory(snap,batch,weight,confirmed)
       .then(function(res){
         if(res&&res.ok===false){
           unlock();
-          if(res.needsConfirm){showDuplicateConfirm(res,snap,weight,function(){register(true);});}
-          else{showServerError(res.error||'A szerver elutasította a regisztrációt.');}
+          if(res.needsConfirm){
+            writeWaitingPage(w,'Megerősítésre vár…',snap,batch);
+            showDuplicateConfirm(res,snap,weight,
+              function(){ register(true); },              // megerősítve
+              function(){ try{w.close();}catch(e){} });    // mégsem -> ablak bezár
+          } else {
+            try{w.close();}catch(e){}
+            showServerError(res.error||'A szerver elutasította a regisztrációt.');
+          }
           return;
         }
         unlock();
-        doPrint(batch,pills,wText,formUrl,snap);
+        finishPrint(w,batch,pills,wText,qrText,snap);
       })
       .catch(function(){
         unlock();
-        showOfflineBlock(batch,pills,wText,formUrl,snap);
+        writeWaitingPage(w,'Nincs kapcsolat…',snap,batch);
+        showOfflineBlock(batch,pills,wText,qrText,snap,w);
       });
   }
   register(false);
 }
 
+// Ideiglenes tartalom a már megnyitott nyomtatási ablakban
+function writeWaitingPage(w,msg,prod,batch){
+  try{
+    w.document.open();
+    w.document.write('<!DOCTYPE html><html lang="hu"><head><meta charset="UTF-8">'
+      +'<title>Bruno — címke</title><style>'
+      +'body{font-family:-apple-system,Arial,sans-serif;background:#1C1C1C;color:#DEDEDE;'
+      +'display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:16px;}'
+      +'.b{font-size:15px;font-weight:700;color:#D0783A;margin-bottom:8px;}'
+      +'.m{font-size:13px;color:#888;}.s{font-size:11px;color:#555;margin-top:10px;font-family:monospace;}'
+      +'</style></head><body><div><div class="b">'+(prod||'')+'</div>'
+      +'<div class="m">'+msg+'</div><div class="s">'+(batch||'')+'</div></div></body></html>');
+    w.document.close();
+  }catch(e){}
+}
+
 // 5/b) Duplikátum-gyanú — a HELYES út a könnyű, a hibás a nehéz
-function showDuplicateConfirm(res,flavor,weight,onConfirm){
+function showDuplicateConfirm(res,flavor,weight,onConfirm,onCancel){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML='<div style="background:#2a1a0a;border:3px solid #854F0B;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
-    +'<div style="font-size:46px;margin-bottom:12px;">\u26A0\uFE0F</div>'
+    +'<div style="font-size:46px;margin-bottom:12px;">⚠️</div>'
     +'<div style="font-size:15px;font-weight:800;color:#FAC775;margin-bottom:8px;line-height:1.55;">'+(res.error||'')+'</div>'
     +(res.prevBatch?'<div style="font-size:12px;color:#a08050;font-family:monospace;margin-bottom:18px;">Korábbi gyártási szám: '+res.prevBatch+'</div>':'<div style="margin-bottom:18px;"></div>')
     +'<button id="dupCancel" style="width:100%;padding:18px;border:none;border-radius:10px;background:#D0783A;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:14px;font-family:inherit;">Mégsem — nem akartam újra</button>'
@@ -569,7 +628,7 @@ function showDuplicateConfirm(res,flavor,weight,onConfirm){
   document.body.appendChild(ov);
   var cancel=document.getElementById('dupCancel');
   cancel.focus();  // a HELYES gomb kap fókuszt, így egy véletlen Enter nem erősít meg
-  cancel.onclick=function(){document.body.removeChild(ov);};
+  cancel.onclick=function(){document.body.removeChild(ov);if(onCancel)onCancel();};
   document.getElementById('dupOk').onclick=function(){document.body.removeChild(ov);onConfirm();};
 }
 
@@ -577,14 +636,15 @@ function showServerError(msg){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
-    +'<div style="font-size:44px;margin-bottom:12px;">\uD83D\uDEAB</div>'
+    +'<div style="font-size:44px;margin-bottom:12px;">🚫</div>'
     +'<div style="font-size:15px;font-weight:700;color:#ff8888;margin-bottom:20px;line-height:1.6;">'+msg+'</div>'
     +'<button id="seOk" style="width:100%;padding:15px;border:none;border-radius:9px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Értem</button>'
     +'</div>';
   document.body.appendChild(ov);
   document.getElementById('seOk').onclick=function(){document.body.removeChild(ov);};
 }
-function showOfflineBlock(batch,pills,wText,formUrl,snap){
+
+function showOfflineBlock(batch,pills,wText,qrText,snap,openWin){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:28px;max-width:420px;width:100%;text-align:center;">'
@@ -597,43 +657,60 @@ function showOfflineBlock(batch,pills,wText,formUrl,snap){
   document.body.appendChild(ov);
   document.getElementById('offRetry').onclick=function(){
     document.body.removeChild(ov);
+    try{if(openWin)openWin.close();}catch(e){}
     var b=document.getElementById('printBtn');b.disabled=false;b.dataset.busy='';
     printLabel();
   };
   document.getElementById('offForce').onclick=function(){
-    document.body.removeChild(ov);doPrint(batch,pills,wText,formUrl,snap);
+    document.body.removeChild(ov);
+    if(openWin){ finishPrint(openWin,batch,pills,wText,qrText,snap,true); }
+    else {
+      // Nem volt nyitva ablak (szinkron offline ág) — itt a kattintás
+      // már nem "friss", ezért a popup blokkolható. Jelezzük, ha az.
+      var w2=window.open('','_blank','width=320,height=420');
+      if(!w2){showServerError('A böngésző blokkolta a felugró ablakot. Engedélyezd, majd nyomd meg újra a Nyomtatás gombot.');return;}
+      finishPrint(w2,batch,pills,wText,qrText,snap,true);
+    }
   };
 }
-function doPrint(batch,pills,wText,formUrl,snap){
+
+// A címke tényleges kiírása a MÁR MEGNYITOTT ablakba
+function finishPrint(w,batch,pills,wText,qrText,snap,offline){
   var btn=document.getElementById('printBtn');
-  btn.disabled=true;btn.textContent='Nyomtatás...';
+  btn.disabled=true;btn.textContent='Nyomtatás…';
   var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
   document.body.appendChild(tmp);
 
-  function done(batch){
+  function done(){
     todayCount++;document.getElementById('todayCount').textContent=todayCount;
     try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){}
     seqNum++;document.getElementById('seqDisplay').textContent=p2(seqNum);
     btn.dataset.busy='';
-    showToast('✅ Rögzítve és nyomtatva — '+batch+' (Konyha +1, Mozgás Log OK)');
+    btn.textContent='Címke Nyomtatása';   // felirat visszaállítása
+    showToast(offline
+      ? '⚠️ Kinyomtatva OFFLINE — '+batch+' (kézzel pótolni kell!)'
+      : '✅ Rögzítve és nyomtatva — '+batch+' (Konyha +1, Mozgás Log OK)');
     resetForm();
   }
 
+  function emit(qrDataUrl){
+    try{ document.body.removeChild(tmp); }catch(e){}
+    writeLabelInto(w,batch,pills,wText,qrDataUrl,snap);
+    done();
+  }
+
   try{
-    new QRCode(tmp,{text:formUrl,width:1200,height:1200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L,margin:2});
+    new QRCode(tmp,{text:qrText,width:1200,height:1200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
     setTimeout(function(){
-      var c=tmp.querySelector('canvas'),qr=c?c.toDataURL():'';
-      document.body.removeChild(tmp);
-      var w=openPrint(batch,pills,wText,qr,snap);
-      if(w){done(batch);}else{alert('Engedélyezd a felugró ablakokat a böngészőben!');btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
+      var cv=tmp.querySelector('canvas');
+      emit(cv?cv.toDataURL():'');
     },200);
   }catch(e){
-    document.body.removeChild(tmp);
-    var w=openPrint(batch,pills,wText,'',snap);if(w)done(batch);else{btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
+    emit('');
   }
 }
 
-function openPrint(batch,pills,wText,qrUrl,prod){
+function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
   var allergenText=pills.length?pills.join(', '):'Nincs allergén';
   var alClass=pills.length?'al':'al none';
   var today=displayDate();
@@ -655,6 +732,7 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'.al.none{color:#155724;}'
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 4mm;justify-content:center;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4mm 0;background:#fff;}'
+    +'.qrbox{background:#fff;padding:3mm;display:inline-block;line-height:0;}'
     +'.qrs img{width:48mm!important;height:48mm!important;max-width:none!important;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:8pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;width:calc(100% + 8mm);padding:2mm 4mm;font-size:11pt;color:#888;border-top:0.3mm solid #eee;line-height:1.3;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0 -4mm -4mm -4mm;}'
@@ -671,15 +749,14 @@ function openPrint(batch,pills,wText,qrUrl,prod){
     +'<div class="r"><span class="rl">Dátum</span><span class="rv">'+today+'</span></div>'
     +'</div></div>'
     +'<div class="qrs">'
-    +(qrUrl?'<img src="'+qrUrl+'">':'')
+    +(qrUrl?'<div class="qrbox"><img src="'+qrUrl+'"></div>':'')
     +'<div class="qrt">'+batch+'</div>'
     +'</div>'
     +'<div class="lf">Minőségét megőrzi gyártástól számított 20 napig. &nbsp;|&nbsp; −15 °C alatt tárolandó.</div>'
     +'</div>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},250);};<\/script>'
     +'</body></html>';
-  var w=window.open('','_blank','width=320,height=420');
-  if(w){w.document.write(h);w.document.close();}
+  try{ w.document.open(); w.document.write(h); w.document.close(); }catch(e){}
   return w;
 }
 </script>
