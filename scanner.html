@@ -170,12 +170,28 @@ function flash(ok,title,lines){
     h+='</div>';
   }
   el.style.background=bg;el.innerHTML=h;el.style.display='flex';
-  if(ok)fxSuccess(); else fxError();
+  // A hang/rezgés SOHA nem blokkolhatja a vizuális visszajelzést:
+  // az első AudioContext létrehozása hidegen másodpercekig tarthat.
+  setTimeout(function(){ if(ok)fxSuccess(); else fxError(); },0);
   clearTimeout(el._t);
   el._t=setTimeout(function(){el.style.display='none';},ok?900:1600);
 }
 
 // Gomb töltő állapot
+
+// Az AudioContext előmelegítése az első érintésre, hogy a tényleges
+// művelet pillanatában már ne kelljen létrehozni (hidegen ~1,8 mp).
+(function(){
+  function warm(){
+    try{ if(!_actx){var AC=window.AudioContext||window.webkitAudioContext;if(AC)_actx=new AC();} }catch(e){}
+    if(_actx&&_actx.state==='suspended'){try{_actx.resume();}catch(e){}}
+    document.removeEventListener('touchstart',warm,true);
+    document.removeEventListener('click',warm,true);
+  }
+  document.addEventListener('touchstart',warm,true);
+  document.addEventListener('click',warm,true);
+})();
+
 function btnBusy(btn,on,busyLabel){
   if(!btn)return;
   if(on){
@@ -364,107 +380,166 @@ function doCfm(){closeCfm();send(selOp,'','')}
 function sendExtra(){var m=document.getElementById('xmv').value,h=document.getElementById('xhv').value;
   if(selOp==='athelyezes'){if(!h){toast('Valaszd ki hova!',1);return}if(h===store){toast('Nem helyezheted at ugyanoda!',1);return}}send(selOp,m,h)}
 
-var _sending=false;
 function send(id,mar,hon){
-  if(_sending)return;                       // 4a) dupla koppintás elnyelése
-  if(navigator.onLine===false){netBlock(function(){send(id,mar,hon);});return;}
-  _sending=true;
-  document.querySelectorAll('.op').forEach(function(b){b.disabled=true;b.style.opacity='.45';});
-  var _sendBtn=document.querySelector('#xf .btn.bo');
-  btnBusy(_sendBtn,true,'Küldés…');
   var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
-  var payload={store:store,flavor:D.flavor,batch:D.batch,weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
+  var payload={action:'scanner_submit',store:store,flavor:D.flavor,batch:D.batch,
+               weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
   if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}
-  function unlockSend(){
-    _sending=false;
-    document.querySelectorAll('.op').forEach(function(b){b.disabled=false;b.style.opacity='';});
-    btnBusy(_sendBtn,false);
-  }
-  function onResult(r){
-    setNet(true);unlockSend();
-    if(!r||typeof r!=='object'){showError('Váratlan válasz a szervertől.');return;}
-    if(r.ok===false){
-      if(r.wrongTool==='konyhan'){
-        fxError();showWrongTool(r.error);
-      } else {
-        fxError();showError(r.error||'Ismeretlen hiba.');
-      }
-      return;
-    }
-    // Sikeres — nagy zöld villanás + rezgés + hang, majd részletes lista
-    flash(true, r.duplicateIgnored ? 'Már rögzítve volt' : (map[id]||id), [
-      {text:D.flavor,big:true},
-      {text:D.batch,mono:true},
-      {text:store+(D.weight?' · '+D.weight+' g':'')}
-    ]);
-    document.getElementById('st').textContent='✓ Rögzítve';
-    document.getElementById('st').style.color='#5DCAA5';
-    var h='<div style="font-size:15px;color:#fff;font-weight:700;margin-bottom:4px;">'+(map[id]||id)+'</div>'
-      +'<div style="font-size:13px;color:#888;margin-bottom:12px;">'+D.flavor+' &middot; '+D.batch+' &middot; '+store+'</div>';
-    if(r.steps&&r.steps.length){
-      h+='<div style="background:#04231d;border:1px solid #0F6E56;border-radius:10px;padding:12px;text-align:left;">';
-      r.steps.forEach(function(st){h+='<div style="font-size:13px;color:#5DCAA5;line-height:1.9;">✓ '+st+'</div>';});
-      h+='</div>';
-    }
-    if(r.warning){
-      h+='<div style="background:#412402;border:2px solid #854F0B;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;color:#FAC775;font-weight:700;line-height:1.6;text-align:left;">'+r.warning+'</div>';
-    }
-    document.getElementById('si').innerHTML=h;
-    document.getElementById('suc').classList.add('s');
-  }
-  function showWrongTool(msg){
-    document.getElementById('st').textContent='Nem v\u00E9grehajthat\u00F3';
-    document.getElementById('st').style.color='#FAC775';
-    document.getElementById('si').innerHTML=
-      '<div style="background:#412402;border:2px solid #854F0B;border-radius:10px;padding:14px;color:#FAC775;font-size:14px;font-weight:700;line-height:1.7;text-align:left;">'+msg+'</div>';
-    document.getElementById('suc').classList.add('s');
-  }
-  function onErr(e){unlockSend();fxError();netBlock(function(){send(id,mar,hon);});}
-  if(gsrWorks){
-    try{
-      google.script.run.withSuccessHandler(onResult).withFailureHandler(function(e){toast('GSR hiba, fetch...',1);fetchScannerSubmit(payload,onResult,onErr);}).gsScannerSubmit(payload);
-    }catch(ex){fetchScannerSubmit(payload,onResult,onErr);}
-  } else {fetchScannerSubmit(payload,onResult,onErr);}
+
+  // ── OPTIMISTIC: a dolgozó AZONNAL visszajelzést kap ──
+  //    A szerver-hívás a háttérben, sorban megy — nem várunk rá.
+  flash(true,(map[id]||id),[
+    {text:D.flavor,big:true},
+    {text:D.batch,mono:true},
+    {text:store+(D.weight?' · '+D.weight+' g':'')}
+  ]);
+  qAdd(payload,(map[id]||id)+' · '+D.flavor+' · '+D.batch);
+
+  document.getElementById('st').textContent='✓ Elküldve';
+  document.getElementById('st').style.color='#5DCAA5';
+  document.getElementById('si').innerHTML=
+    '<div style="font-size:15px;color:#fff;font-weight:700;margin-bottom:4px;">'+(map[id]||id)+'</div>'
+    +'<div style="font-size:13px;color:#888;margin-bottom:12px;">'+D.flavor+' &middot; '+D.batch+' &middot; '+store+'</div>'
+    +'<div id="qList"></div>';
+  document.getElementById('suc').classList.add('s');
+  qRenderList();
 }
 
-// ── E) INTERNET-HIANY BLOKKOLO JELZES ──────────────────────────
-function netBlock(retryFn){
-  var ov=document.getElementById('netOv');
-  if(!ov){
-    ov=document.createElement('div');ov.id='netOv';
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    document.body.appendChild(ov);
-  }
-  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:400px;width:100%;text-align:center;font-family:inherit;">'
-    +'<div style="font-size:46px;margin-bottom:10px;">🚫</div>'
-    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:12px;line-height:1.3;">NINCS INTERNETKAPCSOLAT!</div>'
-    +'<div style="font-size:14px;color:#f0c0c0;line-height:1.6;margin-bottom:6px;font-weight:700;">A művelet NEM került be a rendszerbe.</div>'
-    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">Próbáld újra, ha van net.</div>'
-    +'<button id="netRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
-    +'<button id="netClose" style="width:100%;padding:12px;border:1px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:13px;cursor:pointer;font-family:inherit;">Bezárás</button>'
-    +'</div>';
-  ov.style.display='flex';
-  document.getElementById('netRetry').onclick=function(){ov.style.display='none';if(retryFn)retryFn();};
-  document.getElementById('netClose').onclick=function(){ov.style.display='none';};
+// A sikeres képernyőn látszik, mi ment már át
+function qRenderList(){
+  var el=document.getElementById('qList');
+  if(!el)return;
+  var last=Q.slice(-6).reverse();
+  if(!last.length){el.innerHTML='';return;}
+  el.innerHTML=last.map(function(x){
+    var ic,col,txt;
+    if(x.state==='done'){ic='✓';col='#5DCAA5';txt='megerősítve';}
+    else if(x.state==='failed'){ic='✕';col='#ff6666';txt='nem ment át — érintsd meg a piros sávot';}
+    else if(x.state==='rejected'){ic='✕';col='#ff6666';txt=(x.error||'elutasítva').substring(0,60);}
+    else {ic='⟳';col='#FAC775';txt='küldés…';}
+    return '<div style="display:flex;gap:9px;align-items:flex-start;background:#111;border:1px solid #222;'
+      +'border-radius:8px;padding:8px 10px;margin-bottom:5px;text-align:left;">'
+      +'<span style="color:'+col+';font-weight:800;font-size:15px;">'+ic+'</span>'
+      +'<span style="flex:1;font-size:12px;color:#aaa;line-height:1.5;">'+x.label
+      +'<br><span style="color:'+col+';font-size:11px;">'+txt+'</span></span></div>';
+  }).join('');
 }
+
 function showError(msg){
   document.getElementById('st').textContent='HIBA';
   document.getElementById('st').style.color='#ff5555';
   document.getElementById('si').innerHTML='<div style="background:#2a0a0a;border:2px solid #5a1a1a;border-radius:10px;padding:14px;color:#ff8888;font-size:14px;font-weight:700;line-height:1.6;text-align:left;">'+msg+'</div>';
   document.getElementById('suc').classList.add('s');
 }
-function fetchScannerSubmit(payload,onOk,onErr){
-  payload.action='scanner_submit';
-  fetch(DEPLOY_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
-    .then(function(r){return r.json();})
-    .then(function(data){if(onOk)onOk(data);})
-    .catch(function(e){if(onErr)onErr(e);else toast('Fetch hiba: '+e,1);});
-}
-
 function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('a')});document.getElementById(id).classList.add('a');window.scrollTo(0,0)}
 function reset(){D={};selOp='';document.getElementById('xf').style.display='none';document.getElementById('suc').classList.remove('s');document.getElementById('cfm').classList.remove('s');show('s1')}
 function toast(m,e){var t=document.getElementById('toast');t.textContent=(e?'! ':'OK ')+m;t.className='toast '+(e?'ter':'tok')+' v';setTimeout(function(){t.classList.remove('v')},2500)}
 
+
+
+// ═══════════════════════════════════════════════════════════════
+//  KÜLDÉSI SOR (optimistic UI)
+//  A dolgozó SOHA nem vár a szerverre: a gombnyomás pillanatában
+//  megkapja a visszajelzést, a küldés a háttérben, sorban megy.
+//  Sikertelenség esetén automatikus újrapróbálkozás; csak a
+//  végleges kudarc után jelenik meg figyelmeztetés.
+//  A backend 30 mp-es idempotencia-védelme a második biztosíték.
+// ═══════════════════════════════════════════════════════════════
+var Q=[], qBusy=false, qSeq=0;
+var Q_RETRIES=4, Q_BACKOFF=[1000,3000,8000,20000];
+
+function qLoad(){
+  try{var r=localStorage.getItem('bruno_queue');if(r)Q=JSON.parse(r)||[];}catch(e){Q=[];}
+}
+function qSave(){ try{localStorage.setItem('bruno_queue',JSON.stringify(Q));}catch(e){} }
+
+function qAdd(payload,label){
+  qSeq++;
+  var item={id:'q'+Date.now()+'_'+qSeq,payload:payload,label:label||'',
+            state:'pending',tries:0};
+  Q.push(item);qSave();qRender();qPump();
+  return item;
+}
+
+function qPump(){
+  if(qBusy)return;
+  var next=null;
+  for(var i=0;i<Q.length;i++){ if(Q[i].state==='pending'||Q[i].state==='retry'){next=Q[i];break;} }
+  if(!next){qRender();return;}
+  if(navigator.onLine===false){setNet(false);qRender();return;}
+  qBusy=true;next.state='sending';qRender();
+  fetch(DEPLOY_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain'},body:JSON.stringify(next.payload)})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      qBusy=false;setNet(true);
+      if(res&&res.ok===false){
+        // A szerver ELUTASÍTOTTA (nem hálózati hiba) — nincs értelme újrapróbálni
+        next.state='rejected';next.error=res.error||'A szerver elutasította.';
+        next.wrongTool=res.wrongTool||'';
+      } else {
+        next.state='done';next.result=res;
+      }
+      qSave();qRender();setTimeout(qPump,60);
+    })
+    .catch(function(){
+      qBusy=false;setNet(false);
+      next.tries++;
+      if(next.tries>=Q_RETRIES){ next.state='failed'; }
+      else { next.state='retry'; setTimeout(qPump, Q_BACKOFF[next.tries-1]||20000); }
+      qSave();qRender();
+    });
+}
+
+function qStats(){
+  var s={waiting:0,failed:0,rejected:0,done:0};
+  Q.forEach(function(x){
+    if(x.state==='pending'||x.state==='retry'||x.state==='sending')s.waiting++;
+    else if(x.state==='failed')s.failed++;
+    else if(x.state==='rejected')s.rejected++;
+    else s.done++;
+  });
+  return s;
+}
+
+function qRender(){
+  var s=qStats();
+  var bar=document.getElementById('qBar');
+  if(!bar){
+    bar=document.createElement('div');bar.id='qBar';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9000;display:none;'
+      +'padding:11px 14px;font-size:13px;font-weight:700;text-align:center;cursor:pointer;'
+      +'font-family:inherit;line-height:1.4;';
+    document.body.appendChild(bar);
+    bar.onclick=function(){
+      Q.forEach(function(x){ if(x.state==='failed'){x.state='pending';x.tries=0;} });
+      qSave();qRender();qPump();
+    };
+  }
+  var bad=s.failed+s.rejected;
+  if(bad>0){
+    bar.style.display='block';
+    bar.style.background='#c01818';bar.style.color='#fff';
+    var txt='⚠️ '+bad+' művelet nem ment át';
+    if(s.rejected>0&&s.failed===0)txt+=' — a szerver elutasította';
+    else txt+=' — érintsd meg az újraküldéshez';
+    bar.textContent=txt;
+  } else if(s.waiting>0){
+    bar.style.display='block';
+    bar.style.background='#3a2a10';bar.style.color='#FAC775';
+    bar.textContent=(navigator.onLine===false?'📴 Offline — ':'')+s.waiting+' művelet vár küldésre';
+  } else {
+    bar.style.display='none';
+  }
+  if(typeof qRenderList==='function')qRenderList();
+  // takaritas: a regen kesz tetelek kivezetese
+  if(Q.length>60)Q=Q.filter(function(x){return x.state!=='done';}).concat(Q.slice(-20));
+}
+
+// Net visszatereskor azonnal probaljuk ujra
+window.addEventListener('online',function(){ Q.forEach(function(x){ if(x.state==='failed'){x.state='pending';x.tries=0;} }); qSave(); qPump(); });
+setInterval(function(){ if(qStats().waiting>0)qPump(); },5000);
+qLoad(); qRender(); qPump();
 
 // ── 3) ÁLLANDÓ ONLINE/OFFLINE JELZŐ ────────────────────────────
 var netOk=null;
