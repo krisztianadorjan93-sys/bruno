@@ -49,6 +49,7 @@ select:focus,input:focus{border-color:#D0783A}
 .netind.off{color:#ff6666;border-color:#5a1a1a;background:#2a0a0a}.netind.off .dot{background:#ff3333}
 .fxspin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:fxsp .7s linear infinite;margin-right:8px;vertical-align:-2px}
 @keyframes fxsp{to{transform:rotate(360deg)}}
+@keyframes fxedge{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
 #qr-reader{border-radius:10px;overflow:hidden;margin-bottom:12px}
 optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
 </style>
@@ -73,6 +74,8 @@ optgroup{background:#1a1a1a;color:#555}option{background:#1a1a1a;color:#e0e0e0}
       <input type="range" id="zoomRange" min="1" max="5" step="0.1" value="1" style="width:100%;padding:0;">
     </div>
     <button class="btn bd" id="qrStopBtn" style="display:none;margin-top:6px" onclick="stopCam()">&#10005; Kamera bez&#225;r&#225;s</button>
+    <button class="btn" id="noScanBtn" onclick="jumpToManual()" style="margin-top:10px;background:#3a2a10;color:#FAC775;border:2px solid #854F0B;font-size:15px;padding:14px;">&#128269; Nem olvassa be? &#8594; K&#233;zi bevitel</button>
+    <div style="font-size:11px;color:#666;text-align:center;margin-top:6px;line-height:1.5;">Kopott vagy gy&#369;r&#337;tt c&#237;mk&#233;n&#233;l haszn&#225;ld ezt</div>
   </div>
   <div class="card"><div class="card-t">Vagy k&#233;zzel</div>
     <div class="field"><label>&#205;z neve</label><select id="mf"><option value="">&#8211;</option><optgroup label="Tejsz&#237;nes"><option>Fior di latte</option><option>Amarena</option><option>Stracciatella</option><option>Cremino</option><option>Fiori di coco</option><option>Fiori di bacio</option><option>Fiori di pistacchio</option><option>Super yoghurt</option><option>Yoghurt maracuja</option><option>Yoghurt levendula</option><option>Keksz</option><option>Vanilia</option><option>Tiramisu</option><option>Zabaione</option><option>Crema di limone</option><option>Sos caramel</option><option>Pisztacia</option><option>Pisztacia extra</option><option>Mogyoro</option><option>Bacio</option><option>Bacio extra</option><option>Csoki</option><option>&#201;tcsoki</option><option>Raffaello</option><option>Torroncino</option><option>Zuppa inglese</option><option>Kave</option><option>Ferrero</option><option>Cremino nero</option><option>Fah&#233;j</option><option>Bacio perugino</option><option>Cantuccio Fiorentino</option></optgroup><optgroup label="Sorbetek"><option>Citrom</option><option>Mango</option><option>Eper</option><option>Malna</option><option>Bergamotto</option><option>Afonya</option><option>Ananas</option><option>Mandarin</option><option>S&#225;rgadinnye</option><option>Agrumi di sicilia</option><option>Gorogdinnye</option><option>Erdei gy&#252;m&#246;lcs</option></optgroup><optgroup label="Granita"><option>Eper Granita</option><option>Portofino Granita</option><option>Citrom Granita</option><option>Mango Granita</option><option>Agrumi Granita</option><option>Sargadinnye Granita</option><option>Maggio Granita</option><option>Kave Granita</option><option>Mandula Granita</option><option>Pisztacia Granita</option><option>Gorogdinnye Granita</option></optgroup></select></div>
@@ -129,14 +132,14 @@ function parseTubQR(text){
 //  Ez akadályozza meg, hogy visszajelzés híján újra nyomkodjon.
 // ═══════════════════════════════════════════════════════════════
 var _actx=null;
-function _beep(freq,dur,type){
+function _beep(freq,dur,type,vol){
   try{
     if(!_actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;_actx=new AC();}
     if(_actx.state==='suspended'){_actx.resume();}
     var o=_actx.createOscillator(),g=_actx.createGain();
     o.type=type||'sine';o.frequency.value=freq;
     g.gain.setValueAtTime(0.0001,_actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.25,_actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(vol||0.25,_actx.currentTime+0.01);
     g.gain.exponentialRampToValueAtTime(0.0001,_actx.currentTime+dur);
     o.connect(g);g.connect(_actx.destination);
     o.start();o.stop(_actx.currentTime+dur+0.02);
@@ -144,10 +147,45 @@ function _beep(freq,dur,type){
 }
 function _vibe(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
 
-function fxSuccess(){ _beep(1180,0.09,'sine'); setTimeout(function(){_beep(1560,0.10,'sine');},95); _vibe(200); }
-function fxError(){ _beep(320,0.28,'square'); _vibe([100,50,100]); }
+// iOS Safari NEM támogatja a navigator.vibrate()-et. Mivel a csapat
+// nagy része iPhone-t használ, ott a rezgést erősebb hanggal és
+// hosszabb, keretes villanással kompenzáljuk. Androidon marad a rezgés.
+var HAS_VIBE=(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function');
+function fxSuccess(){
+  if(HAS_VIBE){ _beep(1180,0.09,'sine'); setTimeout(function(){_beep(1560,0.10,'sine');},95); _vibe(200); }
+  else{ // iPhone: háromhangú, hosszabb és hangosabb jelzés
+    _beep(1046,0.16,'sine',0.5);
+    setTimeout(function(){_beep(1318,0.16,'sine',0.5);},130);
+    setTimeout(function(){_beep(1568,0.30,'sine',0.55);},265);
+  }
+}
+function fxError(){
+  if(HAS_VIBE){ _beep(320,0.28,'square'); _vibe([100,50,100]); }
+  else{ _beep(300,0.34,'square',0.6);
+        setTimeout(function(){_beep(240,0.42,'square',0.6);},300); }
+}
 
 // Teljes képernyős villanás nagy adatokkal
+// Semleges (kék) beolvasás-visszajelzés — NEM siker-jelzés
+function flashScan(fl,ba,we){
+  var el=document.getElementById('fxFlash');
+  if(!el){el=document.createElement('div');el.id='fxFlash';
+    el.style.cssText='position:fixed;inset:0;z-index:100000;display:none;align-items:center;'
+      +'justify-content:center;text-align:center;padding:22px;flex-direction:column;font-family:inherit;';
+    document.body.appendChild(el);}
+  el.style.background='rgba(10,45,95,.97)';
+  el.innerHTML='<div style="font-size:60px;margin-bottom:10px;">📷</div>'
+    +'<div style="font-size:19px;font-weight:800;color:#fff;margin-bottom:12px;">Beolvasva — válassz műveletet</div>'
+    +'<div style="background:rgba(0,0,0,.3);border-radius:14px;padding:16px 20px;max-width:420px;width:100%;">'
+    +'<div style="font-size:26px;font-weight:800;color:#fff;">'+fl+'</div>'
+    +'<div style="font-size:15px;color:#cfe0ff;font-family:monospace;margin-top:4px;">'+ba+'</div>'
+    +(we?'<div style="font-size:14px;color:#cfe0ff;margin-top:2px;">'+we+' g</div>':'')
+    +'</div>';
+  el.style.display='flex';
+  setTimeout(function(){_beep(880,0.07,'sine');},0);
+  clearTimeout(el._t); el._t=setTimeout(function(){el.style.display='none';},700);
+}
+
 function flash(ok,title,lines){
   var el=document.getElementById('fxFlash');
   if(!el){
@@ -169,7 +207,13 @@ function flash(ok,title,lines){
     });
     h+='</div>';
   }
-  el.style.background=bg;el.innerHTML=h;el.style.display='flex';
+  // Rezgés nélküli készüléken (iPhone) a villanás hosszabb és a
+  // képernyő teljes széle is villog — ez pótolja a hiányzó rezgést.
+  el.style.background=bg;
+  el.style.boxShadow = HAS_VIBE ? 'none'
+    : 'inset 0 0 0 14px '+(ok?'#7CFFB2':'#FF7A7A');
+  el.style.animation = HAS_VIBE ? 'none' : 'fxedge .42s ease-in-out 3';
+  el.innerHTML=h;el.style.display='flex';
   // A hang/rezgés SOHA nem blokkolhatja a vizuális visszajelzést:
   // az első AudioContext létrehozása hidegen másodpercekig tarthat.
   setTimeout(function(){ if(ok)fxSuccess(); else fxError(); },0);
@@ -253,14 +297,21 @@ function parseQR(u){
   var r=parseTubQR(u);
   if(!r){fxError();toast('Nem Bruno QR / ervenytelen',1);return;}
   D={flavor:r.flavor,batch:r.batch,weight:r.weight};
-  // Minden szkenneléskor ELŐSZÖR net-ellenőrzés
-  if(navigator.onLine===false){netBlockScan();return;}
-  flash(true,'QR beolvasva',[
-    {text:D.flavor,big:true},
-    {text:D.batch,mono:true},
-    {text:D.weight?D.weight+' g':'—'}
-  ]);
+  // A beolvasás NEM siker — csak adatfelvétel. Korábban nagy zöld
+  // pipa villant itt, amit a dolgozó a művelet sikerének olvasott,
+  // pedig a művelet még el sem indult. Semleges jelzés kell.
+  flashScan(D.flavor,D.batch,D.weight);
   showTub();
+}
+
+// Kopott címke esetén: kamera bezár, ugrás a kézi bevitelre
+function jumpToManual(){
+  try{stopCam();}catch(e){}
+  var card=document.getElementById('mf').closest('.card');
+  card.style.borderColor='#D0783A';
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(function(){document.getElementById('mf').focus();},350);
+  setTimeout(function(){card.style.borderColor='';},2500);
 }
 
 function manGo(){store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
@@ -270,13 +321,12 @@ function manGo(){store=document.getElementById('sel').value;if(!store){toast('Va
   showTub()}
 
 function showTub(){
-  // Kozponti kapu: kezi bevitelnel es QR-nel is lefut
-  if(navigator.onLine===false){netBlockScan();return;}
   document.getElementById('tn').textContent=D.flavor;
   document.getElementById('tb').textContent=D.batch+(D.weight?' | '+D.weight+'g':'');
   document.getElementById('tsx').textContent='Lekerdezes...';document.getElementById('tsx').className='tub-state';
   document.getElementById('ops').innerHTML='<div style="color:#555;text-align:center;padding:10px">Allapot betoltese...</div>';
   document.getElementById('xf').style.display='none';show('s2');
+  if(isOffline()){ setNet(false); stateUnavailable('Nincs kapcsolat a szerverrel.'); return; }
   if(gsrWorks){
     try{
       google.script.run
@@ -301,15 +351,30 @@ function fetchCheckBatch(){
     });
 }
 
-// Állapot nem elérhető -> semmilyen művelet nem engedhető
+// Állapot nem elérhető (offline vagy szerverhiba)
+// KORÁBBAN ez zsákutca volt: a dolgozó nem tudott műveletet
+// végezni, így SEMMI nem került a küldési sorba, és a munkája
+// elveszett. MOSTANTÓL offline is választhat műveletet — az a
+// queue-ba kerül, és amint visszajön a net, magától elmegy.
+// Az érvényességet a szerver ellenőrzi megérkezéskor; ha elutasítja,
+// az a piros sávban jelenik meg.
 function stateUnavailable(msg){
-  document.getElementById('tsx').textContent='Ismeretlen allapot';
-  document.getElementById('tsx').className='tub-state ts-c';
+  document.getElementById('tsx').textContent='Offline — állapot ismeretlen';
+  document.getElementById('tsx').className='tub-state ts-o';
+  var o=[
+    {id:'kibontas',ic:'\uD83D\uDCE6',l:'Kibont\u00E1s',d:'Pultba ker\u00FCl',c:'op2'},
+    {id:'elfogyott',ic:'\u2705',l:'Elfogyott',d:'Tub ki\u00FCr\u00FClt',c:'op3',cf:1},
+    {id:'toltos',ic:'\u2744\uFE0F',l:'T\u00F6lt\u0151s lett',d:'Maradt benne fagyi',c:'op4',x:'m'},
+    {id:'megsemmisitve',ic:'\u274C',l:'Megsemmis\u00EDtve',d:'Kidobva / bet\u00F6ltve',c:'op5',cf:1},
+    {id:'athelyezes',ic:'\uD83D\uDD04',l:'\u00C1thelyez\u00E9s',d:'M\u00E1sik \u00FCzletbe',c:'op6',x:'h'}
+  ];
   document.getElementById('ops').innerHTML=
-    '<div class="info ir" style="font-size:13px;line-height:1.7;">'
-    +'<div><b>🚫 NINCS INTERNET vagy a szerver nem válaszol</b><br>'+msg
-    +'<br><br>Ne végezz műveletet — nem mentődne el. Próbáld újra, ha van net.</div></div>'
-    +'<button class="btn bo" onclick="showTub()">↻ Újrapróbálás</button>';
+    '<div class="info io" style="font-size:13px;line-height:1.7;"><div>'
+    +'<b>\uD83D\uDCF4 OFFLINE \u2014 a t\u00E9gely \u00E1llapot\u00E1t most nem tudjuk ellen\u0151rizni.</b><br>'
+    +'Nyugodtan dolgozz tov\u00E1bb: a m\u0171velet elment\u0151dik a k\u00FCld\u00E9si sorba, '
+    +'\u00E9s amint visszaj\u00F6n a net, magát\u00F3l elmegy.</div></div>'
+    + o.map(function(op){return '<button class="op '+op.c+'" onclick="pick(\''+op.id+'\',\''+(op.x||'')+'\','+(op.cf?1:0)+')"><span class="oi">'+op.ic+'</span><span class="ot"><span class="ol">'+op.l+'</span><span class="od">'+op.d+'</span></span></button>';}).join('')
+    +'<button class="btn bd" onclick="showTub()" style="margin-top:4px;">\u21BB \u00C1llapot \u00FAjraellen\u0151rz\u00E9se</button>';
   document.getElementById('xf').style.display='none';
 }
 
@@ -542,7 +607,16 @@ setInterval(function(){ if(qStats().waiting>0)qPump(); },5000);
 qLoad(); qRender(); qPump();
 
 // ── 3) ÁLLANDÓ ONLINE/OFFLINE JELZŐ ────────────────────────────
+// FONTOS: navigator.onLine NEM megbízható — iOS Safariban repülő
+// üzemmódban is true-t ad. Ezért csak GYORS NEGATÍV jelzésként
+// használjuk; az igazság a legutóbbi tényleges szerver-hívás
+// eredménye (netOk), amit minden fetch frissít.
 var netOk=null;
+function isOffline(){
+  if(navigator.onLine===false)return true;   // biztosan offline
+  if(netOk===false)return true;              // a szerver ténylegesen nem elérhető
+  return false;                              // netOk true vagy még ismeretlen
+}
 function setNet(ok){
   if(netOk===ok)return;
   netOk=ok;

@@ -83,6 +83,7 @@ optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;
 .netind.off{color:#ff6666;border-color:#5a1a1a;background:#2a0a0a;}.netind.off .dot{background:#ff3333;}
 .fxspin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:fxsp .7s linear infinite;margin-right:8px;vertical-align:-2px;}
 @keyframes fxsp{to{transform:rotate(360deg);}}
+@keyframes fxedge{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
 .item-row.justadded{animation:jadd 1.1s ease;}
 .item-row.baditem{background:#2a0a0a!important;border-color:#5a1a1a!important;}
 @keyframes jadd{0%{background:#0f5a2a;border-color:#2ad06a;transform:scale(1.03);}35%{background:#0f5a2a;border-color:#2ad06a;}100%{background:#111;border-color:#222;transform:scale(1);}}
@@ -207,14 +208,14 @@ function parseTubQR(text){
 //  Ez akadályozza meg, hogy visszajelzés híján újra nyomkodjon.
 // ═══════════════════════════════════════════════════════════════
 var _actx=null;
-function _beep(freq,dur,type){
+function _beep(freq,dur,type,vol){
   try{
     if(!_actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;_actx=new AC();}
     if(_actx.state==='suspended'){_actx.resume();}
     var o=_actx.createOscillator(),g=_actx.createGain();
     o.type=type||'sine';o.frequency.value=freq;
     g.gain.setValueAtTime(0.0001,_actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.25,_actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(vol||0.25,_actx.currentTime+0.01);
     g.gain.exponentialRampToValueAtTime(0.0001,_actx.currentTime+dur);
     o.connect(g);g.connect(_actx.destination);
     o.start();o.stop(_actx.currentTime+dur+0.02);
@@ -222,8 +223,23 @@ function _beep(freq,dur,type){
 }
 function _vibe(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
 
-function fxSuccess(){ _beep(1180,0.09,'sine'); setTimeout(function(){_beep(1560,0.10,'sine');},95); _vibe(200); }
-function fxError(){ _beep(320,0.28,'square'); _vibe([100,50,100]); }
+// iOS Safari NEM támogatja a navigator.vibrate()-et. Mivel a csapat
+// nagy része iPhone-t használ, ott a rezgést erősebb hanggal és
+// hosszabb, keretes villanással kompenzáljuk. Androidon marad a rezgés.
+var HAS_VIBE=(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function');
+function fxSuccess(){
+  if(HAS_VIBE){ _beep(1180,0.09,'sine'); setTimeout(function(){_beep(1560,0.10,'sine');},95); _vibe(200); }
+  else{ // iPhone: háromhangú, hosszabb és hangosabb jelzés
+    _beep(1046,0.16,'sine',0.5);
+    setTimeout(function(){_beep(1318,0.16,'sine',0.5);},130);
+    setTimeout(function(){_beep(1568,0.30,'sine',0.55);},265);
+  }
+}
+function fxError(){
+  if(HAS_VIBE){ _beep(320,0.28,'square'); _vibe([100,50,100]); }
+  else{ _beep(300,0.34,'square',0.6);
+        setTimeout(function(){_beep(240,0.42,'square',0.6);},300); }
+}
 
 // Teljes képernyős villanás nagy adatokkal
 function flash(ok,title,lines){
@@ -247,7 +263,13 @@ function flash(ok,title,lines){
     });
     h+='</div>';
   }
-  el.style.background=bg;el.innerHTML=h;el.style.display='flex';
+  // Rezgés nélküli készüléken (iPhone) a villanás hosszabb és a
+  // képernyő teljes széle is villog — ez pótolja a hiányzó rezgést.
+  el.style.background=bg;
+  el.style.boxShadow = HAS_VIBE ? 'none'
+    : 'inset 0 0 0 14px '+(ok?'#7CFFB2':'#FF7A7A');
+  el.style.animation = HAS_VIBE ? 'none' : 'fxedge .42s ease-in-out 3';
+  el.innerHTML=h;el.style.display='flex';
   // A hang/rezgés SOHA nem blokkolhatja a vizuális visszajelzést:
   // az első AudioContext létrehozása hidegen másodpercekig tarthat.
   setTimeout(function(){ if(ok)fxSuccess(); else fxError(); },0);
