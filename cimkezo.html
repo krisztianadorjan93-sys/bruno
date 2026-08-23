@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bruno Gelateria – Cimkéző</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- qrcodejs 1.0.0 (MIT, davidshimjs) BEÁGYAZVA — korábban cdnjs-ről töltődött.
+     Ha az oldal offline nyílt meg, a könyvtár nem jött le, és a címkéző
+     EGÉSZ NAPRA QR nélküli címkéket gyártott. Ezért nincs külső függés.
+     sha256: c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36 -->
+<script>var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -51,6 +55,28 @@
   .btn-print:hover{background:#B86030;}
   .btn-print:active{transform:scale(0.98);}
   .btn-print:disabled{background:#2A2A2A;color:#484848;cursor:not-allowed;}
+
+  /* Küldési sor — állandó állapotsáv */
+  #qBar{position:sticky;top:0;z-index:900;display:none;padding:11px 14px;font-size:14px;
+        font-weight:700;text-align:center;cursor:pointer;line-height:1.45;
+        border-radius:0 0 10px 10px;margin:-20px -20px 16px -20px;
+        -webkit-user-select:none;user-select:none;}
+  #qBar.ok{background:#12401F;color:#8AE6A6;border-bottom:2px solid #1E6B34;}
+  #qBar.warn{background:#7A1414;color:#FFD9D9;border-bottom:3px solid #FF3B3B;}
+  #qBar.hard{background:#8E0F0F;color:#fff;border-bottom:5px solid #FF3B3B;
+             padding:16px 14px;font-size:15px;cursor:default;}
+  #qPanel{display:none;background:#1A1A1A;border:1px solid #3A3A3A;border-radius:10px;
+          padding:14px;margin:-6px -6px 16px -6px;}
+  .qrow{display:flex;gap:9px;align-items:flex-start;background:#141414;border:1px solid #2A2A2A;
+        border-radius:7px;padding:8px 10px;margin-bottom:5px;font-size:12px;line-height:1.5;}
+  .qrow .qi{font-weight:800;font-size:14px;flex-shrink:0;}
+  .qbtn{width:100%;padding:12px;border:none;border-radius:8px;font-family:inherit;
+         font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .qbtn.pri{background:#D0783A;color:#fff;}
+  .qbtn.sec{background:#2A2A2A;color:#BBB;}
+  #qExportBox{width:100%;min-height:120px;background:#0E0E0E;color:#D8D8D8;border:1px solid #3A3A3A;
+              border-radius:8px;padding:10px;font-family:'DM Mono',Consolas,monospace;font-size:11px;
+              margin-top:8px;display:none;}
 
   .divider{border:none;border-top:1px solid #303030;margin:14px 0;}
 
@@ -141,6 +167,14 @@
 </style>
 </head>
 <body>
+<div id="qBar" onclick="qTogglePanel()"></div>
+<div id="qPanel">
+  <div style="font-size:11px;letter-spacing:2px;color:#666;font-family:'DM Mono',Consolas,monospace;text-transform:uppercase;margin-bottom:10px;">Rögzítésre váró címkék</div>
+  <div id="qList"></div>
+  <button class="qbtn pri" id="qExportBtn" onclick="qExport()">Függőben lévők kimentése</button>
+  <textarea id="qExportBox" readonly onclick="this.select()"></textarea>
+  <button class="qbtn sec" onclick="qTogglePanel()">Bezárás</button>
+</div>
 
 <div class="success-toast" id="successToast"></div>
 
@@ -462,6 +496,7 @@ function onProductChange(){
   document.getElementById('placeholderMsg').style.display='none';
   document.getElementById('labelContent').style.display='flex';
   document.getElementById('printBtn').disabled=false;
+  qRender();
   updatePreview();
 }
 
@@ -492,14 +527,223 @@ function updatePreview(){
   generateQR('qrcode-preview',buildQrPayload(batch,currentProduct,weight),800);
 }
 
-function sendToKitchenInventory(flavorName,batchNumber,weightGrams,confirmed){
-  if(!WEB_APP_URL)return Promise.reject(new Error('Nincs beállítva a szerver URL'));
-  return fetch(WEB_APP_URL,{
-    method:'POST',redirect:'follow',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'gyartas',flavor:flavorName,batch:batchNumber,
-                         weight:weightGrams,confirmed:!!confirmed})
-  }).then(function(r){return r.json();});
+
+
+// ═══════════════════════════════════════════════════════════════
+//  KÜLDÉSI SOR — a regisztráció SOHA nem veszhet el
+//  Külön localStorage kulcs: a scanner.html ugyanezen az origin-en
+//  fut és a 'bruno_queue'-t használja; közös kulcsnál a két oldal
+//  egymás tételeit küldené és kettőznének.
+// ═══════════════════════════════════════════════════════════════
+var QKEY='bruno_queue_cimkezo';
+var Q=[], qBusy=false, qSeq=0, qPanelOpen=false;
+var Q_RETRIES=4, Q_BACKOFF=[1000,3000,8000,20000];
+var Q_CAP=500, Q_WARN=100, Q_EXPORT=400;
+var qStorageBroken=false;
+
+function qLoad(){ try{var r=localStorage.getItem(QKEY); if(r)Q=JSON.parse(r)||[];}catch(e){Q=[];} }
+
+// A mentés hibája NEM nyelődhet el: privát ablakban vagy tele
+// tárhelynél ez a néma catch volt a csendes adatvesztés forrása.
+function qSave(){
+  try{ localStorage.setItem(QKEY,JSON.stringify(Q)); qStorageBroken=false; return true; }
+  catch(e){
+    qStorageBroken=true;
+    hardBlock('A BÖNGÉSZŐ NEM TUDJA ELMENTENI A SORT',
+      'Privát ablak vagy betelt tárhely. A függőben lévő címkék CSAK addig élnek, '
+      +'amíg ez az oldal nyitva van. Mentsd ki őket most, és zárd be a privát ablakot.',true);
+    return false;
+  }
+}
+
+function qAdd(payload,label){
+  qSeq++;
+  var item={id:'q'+Date.now()+'_'+qSeq,payload:payload,label:label||'',
+            state:'pending',tries:0,addedAt:new Date().toISOString()};
+  Q.push(item); qSave(); qRender(); qPump();
+  return item;
+}
+
+function qPump(){
+  if(qBusy)return;
+  var next=null;
+  for(var i=0;i<Q.length;i++){var st=Q[i].state;if(st==='pending'||st==='retry'){next=Q[i];break;}}
+  if(!next){qRender();return;}
+  qBusy=true; next.state='sending'; qRender();
+  fetch(WEB_APP_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain'},body:JSON.stringify(next.payload)})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      qBusy=false; setNet(true);
+      if(res&&res.ok===false){
+        // Elutasítás: NEM nyeljük el. A duplikátum és a needsConfirm
+        // is látható marad a sorban, hibás állapotban.
+        next.state='rejected';
+        next.error=res.error||'A szerver elutasította.';
+        if(res.needsConfirm){
+          next.error='Duplikátum-gyanú a késve felküldött tételnél. '
+            +'A 3 perces ablakot a szerver a BEÉRKEZÉSHEZ méri, nem a nyomtatáshoz, '
+            +'ezért ez téves riasztás is lehet. Ne erősítsd meg automatikusan — döntsd el kézzel.';
+        }
+      } else { next.state='done'; next.result=res; }
+      qSave(); qRender(); setTimeout(qPump,60);
+    })
+    .catch(function(){
+      qBusy=false; setNet(false); next.tries++;
+      if(next.tries>=Q_RETRIES){ next.state='failed'; }
+      else { next.state='retry'; setTimeout(qPump,Q_BACKOFF[next.tries-1]||20000); }
+      qSave(); qRender();
+    });
+}
+
+function qPending(){ return Q.filter(function(x){return x.state!=='done';}); }
+function qStats(){
+  var s={waiting:0,failed:0,rejected:0,done:0};
+  Q.forEach(function(x){
+    if(x.state==='pending'||x.state==='retry'||x.state==='sending')s.waiting++;
+    else if(x.state==='failed')s.failed++;
+    else if(x.state==='rejected')s.rejected++;
+    else s.done++;
+  });
+  s.pending=s.waiting+s.failed+s.rejected;
+  return s;
+}
+
+function qRender(){
+  var s=qStats(), bar=document.getElementById('qBar');
+  if(!bar)return;
+  var n=s.pending;
+  if(n===0){
+    bar.className='ok'; bar.style.display='block';
+    bar.textContent='✓ Kapcsolódva — minden címke rögzítve';
+  } else if(n>=Q_WARN||qStorageBroken){
+    bar.className='hard'; bar.style.display='block';
+    bar.innerHTML='⚠ '+n+' CÍMKE VÁR RÖGZÍTÉSRE — ez már sok.<br>'
+      +'<span style="font-weight:400;font-size:13px;">Állítsd helyre a netet, vagy mentsd ki a listát. '
+      +'Koppints ide a részletekért.</span>';
+    bar.onclick=qTogglePanel;
+  } else if(s.rejected>0){
+    // Elutasítás NEM hálózati hiba — ne mondjuk azt, hogy nincs net.
+    bar.className='warn'; bar.style.display='block';
+    bar.textContent='✖ '+s.rejected+' címkét a szerver ELUTASÍTOTT'
+      +(s.waiting+s.failed?' · '+(s.waiting+s.failed)+' vár':'')+'  (koppints)';
+  } else {
+    bar.className='warn'; bar.style.display='block';
+    bar.textContent='✖ NINCS NET — '+n+' címke vár rögzítésre  (koppints)';
+  }
+  // A darabszám a NYOMTATÁS GOMBON is
+  var pb=document.getElementById('printBtn');
+  if(pb&&!pb.dataset.busy){
+    pb.innerHTML='🖨️ &nbsp;Cimke Nyomtatása'+(n?' <b>('+n+' vár)</b>':'');
+  }
+  if(qPanelOpen)qRenderList();
+  if(n>=Q_EXPORT)qShowExportNudge();
+  // Kész tételek nyesése, de a hibásak SOHA nem tűnnek el
+  if(Q.length>Q_CAP+50){
+    var keep=Q.filter(function(x){return x.state!=='done';});
+    Q=keep.concat(Q.filter(function(x){return x.state==='done';}).slice(-20));
+    qSave();
+  }
+}
+
+function qRenderList(){
+  var el=document.getElementById('qList'); if(!el)return;
+  var items=Q.slice().reverse().slice(0,60);
+  if(!items.length){el.innerHTML='<div style="color:#555;font-size:12px;">A sor üres.</div>';return;}
+  el.innerHTML=items.map(function(x){
+    var ic,col,txt;
+    if(x.state==='done'){ic='✓';col='#5DCAA5';txt='rögzítve';}
+    else if(x.state==='failed'){ic='✖';col='#ff6666';txt='nem ment át — újrapróbálás net esetén';}
+    else if(x.state==='rejected'){ic='✖';col='#ff6666';txt=x.error||'elutasítva';}
+    else {ic='⟳';col='#FAC775';txt='küldés…';}
+    return '<div class="qrow"><span class="qi" style="color:'+col+'">'+ic+'</span>'
+      +'<span style="flex:1;color:#bbb;">'+x.label
+      +'<br><span style="color:'+col+';font-size:11px;">'+txt+'</span></span></div>';
+  }).join('');
+}
+
+function qTogglePanel(){
+  qPanelOpen=!qPanelOpen;
+  document.getElementById('qPanel').style.display=qPanelOpen?'block':'none';
+  if(qPanelOpen)qRenderList();
+}
+function qShowExportNudge(){
+  if(!qPanelOpen){qPanelOpen=true;document.getElementById('qPanel').style.display='block';qRenderList();}
+}
+
+// ── KIMENTÉS: vágólap, tartalékkal, és MINDIG látható szöveg ──
+function qExportText(){
+  var p=qPending();
+  if(!p.length)return 'A sor üres — nincs kimentendő tétel.';
+  var out=['BRUNO — FÜGGŐBEN LÉVŐ CÍMKE-REGISZTRÁCIÓK',
+           'Kimentve: '+new Date().toLocaleString('hu-HU'),
+           'Darab: '+p.length,''];
+  p.forEach(function(x,i){
+    var d=x.payload||{};
+    out.push((i+1)+'. '+(d.batch||'?')+'  |  '+(d.flavor||'?')+'  |  '+(d.weight||'?')+' g'
+      +'  |  nyomtatva: '+(d.printedAt||x.addedAt||'?')
+      +'  |  állapot: '+x.state+(x.error?'  |  hiba: '+x.error:''));
+  });
+  return out.join('\n');
+}
+function qExport(){
+  var txt=qExportText();
+  var box=document.getElementById('qExportBox');
+  // A szöveg MINDIG megjelenik — a dolgozó soha ne higgye, hogy megvan, ha nincs
+  box.value=txt; box.style.display='block';
+  var btn=document.getElementById('qExportBtn');
+  function ok(){btn.textContent='✓ Vágólapra másolva';btn.style.background='#1E6B34';
+                setTimeout(function(){btn.textContent='Függőben lévők kimentése';btn.style.background='';},4000);}
+  function fail(){btn.textContent='A másolás nem sikerült — jelöld ki a szöveget alul';
+                  btn.style.background='#8E0F0F';
+                  setTimeout(function(){btn.textContent='Függőben lévők kimentése';btn.style.background='';},6000);}
+  // 1) modern API
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok).catch(function(){ if(!legacyCopy(box))fail(); else ok(); });
+    return;
+  }
+  // 2) tartalék
+  if(legacyCopy(box))ok(); else fail();
+}
+function legacyCopy(box){
+  try{ box.focus(); box.select(); box.setSelectionRange(0,box.value.length);
+       return !!document.execCommand('copy'); }catch(e){ return false; }
+}
+
+// ── Blokkoló hibaüzenet (tárhely, QR) ──
+function hardBlock(cim,reszlet,exportGomb){
+  var ov=document.getElementById('hardOv');
+  if(!ov){ov=document.createElement('div');ov.id='hardOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(110,8,8,.97);z-index:100002;display:flex;'
+      +'align-items:center;justify-content:center;padding:24px;text-align:center;flex-direction:column;font-family:inherit;';
+    document.body.appendChild(ov);}
+  ov.innerHTML='<div style="font-size:64px;margin-bottom:10px;">✖</div>'
+    +'<div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:12px;max-width:520px;line-height:1.3;">'+cim+'</div>'
+    +'<div style="font-size:15px;color:#ffd8d8;line-height:1.65;max-width:520px;margin-bottom:22px;">'+reszlet+'</div>'
+    +(exportGomb?'<button id="hbExp" style="background:#fff;color:#8E0F0F;border:none;border-radius:10px;padding:15px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;">Függőben lévők kimentése</button>':'')
+    +'<button id="hbOk" style="background:transparent;color:#ffd8d8;border:2px solid #ffd8d8;border-radius:10px;padding:13px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Értem</button>';
+  ov.style.display='flex';
+  var e=document.getElementById('hbExp');
+  if(e)e.onclick=function(){ov.style.display='none';qTogglePanel();qExport();};
+  document.getElementById('hbOk').onclick=function(){ov.style.display='none';};
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ÉBRESZTŐ HÍVÁS + KAPCSOLAT-ÁLLAPOT
+//  selfTest, NEM checkBatch&batch=__ping__ — az utóbbi nemlétező
+//  batch-et keres, ezért végigolvassa a teljes MOZGÁS LOG-ot
+//  (mérve: 3,7-6,7 s), míg a selfTest 1,8-3,2 s és nem olvas logot.
+//  A hidegindítás így a nap első nyomtatása ELŐTT feloldódik.
+// ═══════════════════════════════════════════════════════════════
+var netOk=null, lastSendFailed=false;
+function setNet(ok){
+  if(ok)lastSendFailed=false; else lastSendFailed=true;
+  netOk=ok; qRender();
+}
+function wakePing(){
+  fetch(WEB_APP_URL+'?action=selfTest',{cache:'no-store'})
+    .then(function(r){ if(r.status===200){netOk=true;lastSendFailed=false;qRender();} })
+    .catch(function(){});
 }
 
 function showToast(msg){
@@ -519,91 +763,25 @@ function resetForm(){
   document.getElementById('placeholderMsg').style.display='flex';
   document.getElementById('labelContent').style.display='none';
   var pb=document.getElementById('printBtn');
-  pb.disabled=true;pb.dataset.busy='';pb.textContent='Címke Nyomtatása';
+  pb.disabled=true;pb.dataset.busy='';
   document.getElementById('batchDisplay').textContent='— válassz terméket';
 }
 
+// Enter = kattintas: UGYANAZ a kapu, ugyanaz a busy-őr.
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&!document.getElementById('csDropdown').classList.contains('open')){
-    var btn=document.getElementById('printBtn');if(!btn.disabled)printLabel();
+    var btn=document.getElementById('printBtn');
+    if(!btn.disabled&&btn.dataset.busy!=='1')printLabel();
   }
 });
 
-function printLabel(){
-  if(!currentProduct)return;
-  var weight=document.getElementById('weightInput').value;
-  var wn=parseInt(weight);
-  if(!weight||isNaN(wn)||wn<=0){
-    document.getElementById('weightError').classList.add('visible');
-    document.getElementById('weightInput').classList.add('error');
-    document.getElementById('weightInput').focus();return;
-  }
-  var btn=document.getElementById('printBtn');
-  if(btn.disabled&&btn.dataset.busy==='1')return;
-
-  var batch=batchNum(),pills=ALLERGENS[currentProduct]||[];
-  var wText=weight+' g',snap=currentProduct;
-  var qrText=buildQrPayload(batch,currentProduct,weight);
-
-  // ── Offline-védelem: szinkron ellenőrzés, MIELŐTT ablakot nyitnánk
-  if(navigator.onLine===false){
-    showOfflineBlock(batch,pills,wText,qrText,snap);
-    return;
-  }
-
-  // ── 1) A FELUGRÓ ABLAKOT MÉG A KATTINTÁS ESEMÉNYKEZELŐJÉBEN
-  //    nyitjuk meg, szinkron módon, MINDEN await/.then() ELŐTT.
-  //    A böngészők csak közvetlen felhasználói interakcióra
-  //    engedik a window.open()-t; ha előbb szerver-hívást várnánk
-  //    meg, a popup-blokkoló közbelépne és nem lenne fizikai címke.
-  //    Maga a window.print() az ablak saját szkriptjéből fut,
-  //    ezért a duplikátum-védelem sorrendje nem sérül: a címkét
-  //    csak akkor írjuk bele, ha a szerver visszaigazolt.
-  var w=window.open('','_blank','width=320,height=420');
-  if(!w){
-    showServerError('A böngésző blokkolta a felugró ablakot. Engedélyezd a felugró ablakokat ehhez az oldalhoz, és próbáld újra.');
-    return;
-  }
-  writeWaitingPage(w,'Regisztráció folyamatban…',snap,batch);
-
-  btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás…';
-  function unlock(){btn.disabled=false;btn.dataset.busy='';btn.textContent='Címke Nyomtatása';}
-
-  function register(confirmed){
-    btn.disabled=true;btn.dataset.busy='1';btn.textContent='Feldolgozás…';
-    sendToKitchenInventory(snap,batch,weight,confirmed)
-      .then(function(res){
-        if(res&&res.ok===false){
-          unlock();
-          if(res.needsConfirm){
-            writeWaitingPage(w,'Megerősítésre vár…',snap,batch);
-            showDuplicateConfirm(res,snap,weight,
-              function(){ register(true); },              // megerősítve
-              function(){ try{w.close();}catch(e){} });    // mégsem -> ablak bezár
-          } else {
-            try{w.close();}catch(e){}
-            showServerError(res.error||'A szerver elutasította a regisztrációt.');
-          }
-          return;
-        }
-        unlock();
-        finishPrint(w,batch,pills,wText,qrText,snap);
-      })
-      .catch(function(){
-        unlock();
-        writeWaitingPage(w,'Nincs kapcsolat…',snap,batch);
-        showOfflineBlock(batch,pills,wText,qrText,snap,w);
-      });
-  }
-  register(false);
-}
 
 // Ideiglenes tartalom a már megnyitott nyomtatási ablakban
 function writeWaitingPage(w,msg,prod,batch){
   try{
     w.document.open();
     w.document.write('<!DOCTYPE html><html lang="hu"><head><meta charset="UTF-8">'
-      +'<title>Bruno — címke</title><style>'
+      +'<title>Bruno — cimke</title><style>'
       +'body{font-family:-apple-system,Arial,sans-serif;background:#1C1C1C;color:#DEDEDE;'
       +'display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:16px;}'
       +'.b{font-size:15px;font-weight:700;color:#D0783A;margin-bottom:8px;}'
@@ -614,103 +792,137 @@ function writeWaitingPage(w,msg,prod,batch){
   }catch(e){}
 }
 
-// 5/b) Duplikátum-gyanú — a HELYES út a könnyű, a hibás a nehéz
-function showDuplicateConfirm(res,flavor,weight,onConfirm,onCancel){
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML='<div style="background:#2a1a0a;border:3px solid #854F0B;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
-    +'<div style="font-size:46px;margin-bottom:12px;">⚠️</div>'
-    +'<div style="font-size:15px;font-weight:800;color:#FAC775;margin-bottom:8px;line-height:1.55;">'+(res.error||'')+'</div>'
-    +(res.prevBatch?'<div style="font-size:12px;color:#a08050;font-family:monospace;margin-bottom:18px;">Korábbi gyártási szám: '+res.prevBatch+'</div>':'<div style="margin-bottom:18px;"></div>')
-    +'<button id="dupCancel" style="width:100%;padding:18px;border:none;border-radius:10px;background:#D0783A;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:14px;font-family:inherit;">Mégsem — nem akartam újra</button>'
-    +'<button id="dupOk" tabindex="-1" style="width:100%;padding:9px;border:1px solid #3a3a3a;border-radius:8px;background:transparent;color:#666;font-size:11px;cursor:pointer;font-family:inherit;opacity:.65;">Igen, tényleg két külön tégely</button>'
-    +'</div>';
-  document.body.appendChild(ov);
-  var cancel=document.getElementById('dupCancel');
-  cancel.focus();  // a HELYES gomb kap fókuszt, így egy véletlen Enter nem erősít meg
-  cancel.onclick=function(){document.body.removeChild(ov);if(onCancel)onCancel();};
-  document.getElementById('dupOk').onclick=function(){document.body.removeChild(ov);onConfirm();};
-}
+// ═══════════════════════════════════════════════════════════════
+//  NYOMTATÁS — egyetlen út. Nincs "mégis offline" döntés.
+//  QR mindig helyben (beágyazott könyvtár), regisztráció mindig
+//  a sorba. A gomb a várakozás alatt letiltva és felirattal.
+// ═══════════════════════════════════════════════════════════════
+var PRINT_DEADLINE_MS=3000;   // 2 helyett 3: az Apps Script hidegindítása 2-3 s
 
-function showServerError(msg){
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:26px;max-width:420px;width:100%;text-align:center;">'
-    +'<div style="font-size:44px;margin-bottom:12px;">🚫</div>'
-    +'<div style="font-size:15px;font-weight:700;color:#ff8888;margin-bottom:20px;line-height:1.6;">'+msg+'</div>'
-    +'<button id="seOk" style="width:100%;padding:15px;border:none;border-radius:9px;background:#D0783A;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Értem</button>'
-    +'</div>';
-  document.body.appendChild(ov);
-  document.getElementById('seOk').onclick=function(){document.body.removeChild(ov);};
-}
-
-function showOfflineBlock(batch,pills,wText,qrText,snap,openWin){
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML='<div style="background:#2a0a0a;border:3px solid #ff3333;border-radius:16px;padding:28px;max-width:420px;width:100%;text-align:center;">'
-    +'<div style="font-size:48px;margin-bottom:12px;">🚫</div>'
-    +'<div style="font-size:18px;font-weight:800;color:#ff5555;margin-bottom:10px;">NINCS INTERNETKAPCSOLAT!</div>'
-    +'<div style="font-size:13px;color:#cc8888;line-height:1.6;margin-bottom:20px;">A címke nem regisztrálható a rendszerben. Ellenőrizd a WiFi-t és próbáld újra.</div>'
-    +'<button id="offRetry" style="width:100%;padding:14px;border:none;border-radius:8px;background:#D0783A;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:inherit;">Újrapróbálás</button>'
-    +'<button id="offForce" style="width:100%;padding:12px;border:2px solid #5a1a1a;border-radius:8px;background:transparent;color:#888;font-size:12px;cursor:pointer;font-family:inherit;">Mégis nyomtatok offline — manuálisan pótolom</button>'
-    +'</div>';
-  document.body.appendChild(ov);
-  document.getElementById('offRetry').onclick=function(){
-    document.body.removeChild(ov);
-    try{if(openWin)openWin.close();}catch(e){}
-    var b=document.getElementById('printBtn');b.disabled=false;b.dataset.busy='';
-    printLabel();
-  };
-  document.getElementById('offForce').onclick=function(){
-    document.body.removeChild(ov);
-    if(openWin){ finishPrint(openWin,batch,pills,wText,qrText,snap,true); }
-    else {
-      // Nem volt nyitva ablak (szinkron offline ág) — itt a kattintás
-      // már nem "friss", ezért a popup blokkolható. Jelezzük, ha az.
-      var w2=window.open('','_blank','width=320,height=420');
-      if(!w2){showServerError('A böngésző blokkolta a felugró ablakot. Engedélyezd, majd nyomd meg újra a Nyomtatás gombot.');return;}
-      finishPrint(w2,batch,pills,wText,qrText,snap,true);
-    }
-  };
-}
-
-// A címke tényleges kiírása a MÁR MEGNYITOTT ablakba
-function finishPrint(w,batch,pills,wText,qrText,snap,offline){
+function printLabel(){
+  if(!currentProduct)return;
   var btn=document.getElementById('printBtn');
-  btn.disabled=true;btn.textContent='Nyomtatás…';
-  var tmp=document.createElement('div');tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
-  document.body.appendChild(tmp);
+  if(btn.dataset.busy==='1')return;              // második nyomtatás nem indulhat
 
-  function done(){
-    todayCount++;document.getElementById('todayCount').textContent=todayCount;
-    try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){}
-    seqNum++;document.getElementById('seqDisplay').textContent=p2(seqNum);
-    btn.dataset.busy='';
-    btn.textContent='Címke Nyomtatása';   // felirat visszaállítása
-    showToast(offline
-      ? '⚠️ Kinyomtatva OFFLINE — '+batch+' (kézzel pótolni kell!)'
-      : '✅ Rögzítve és nyomtatva — '+batch+' (Konyha +1, Mozgás Log OK)');
-    resetForm();
+  var weight=document.getElementById('weightInput').value;
+  var wn=parseInt(weight);
+  if(!weight||isNaN(wn)||wn<=0){
+    document.getElementById('weightError').classList.add('visible');
+    document.getElementById('weightInput').classList.add('error');
+    document.getElementById('weightInput').focus();return;
   }
+  var batch=batchNum(), pills=ALLERGENS[currentProduct]||[];
+  var wText=weight+' g', snap=currentProduct;
+  var qrText=buildQrPayload(batch,currentProduct,weight);
 
-  function emit(qrDataUrl){
-    try{ document.body.removeChild(tmp); }catch(e){}
-    writeLabelInto(w,batch,pills,wText,qrDataUrl,snap);
-    done();
-  }
+  // A felugró ablak MÉG a kattintás eseménykezelőjében nyílik,
+  // különben a popup-blokkoló közbelép.
+  var w=window.open('','_blank','width=320,height=420');
+  if(!w){ hardBlock('A BÖNGÉSZŐ BLOKKOLTA A NYOMTATÁSI ABLAKOT',
+    'Engedélyezd a felugró ablakokat ehhez az oldalhoz, majd nyomd meg újra.',false); return; }
+  writeWaitingPage(w,'Rögzítés folyamatban…',snap,batch);
 
-  try{
-    new QRCode(tmp,{text:qrText,width:1200,height:1200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
-    setTimeout(function(){
-      var cv=tmp.querySelector('canvas');
-      emit(cv?cv.toDataURL():'');
-    },200);
-  }catch(e){
-    emit('');
-  }
+  lockPrintBtn(true,'Rögzítés…');
+
+  // ── QR: determinisztikus várakozás, majd FAIL-CLOSED ──
+  makeQr(qrText,function(dataUrl){
+    if(!dataUrl){
+      try{w.close();}catch(e){}
+      lockPrintBtn(false);
+      hardBlock('NEM KÉSZÜLT EL A QR-KÓD — A NYOMTATÁS LEÁLLT',
+        'Fél címke nem mehet ki. Töltsd újra az oldalt (Ctrl+R), és próbáld meg újra. '
+        +'Ha ismétlődik, szólj Krisztiánnak.',false);
+      return;
+    }
+    registerThenPrint(w,batch,pills,wText,snap,qrText,dataUrl,weight);
+  });
 }
 
-function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
+// A canvas elkészültére várunk, nem időzítőre. A könyvtár szinkron
+// rajzol (nincs benne setTimeout), de ha bármi csúszna, rAF-fel
+// próbálkozunk a határidőig, és utána inkább nem nyomtatunk.
+function makeQr(text,cb){
+  var tmp=document.createElement('div');
+  tmp.style.cssText='position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(tmp);
+  var deadline=Date.now()+2000;
+  function cleanup(){ try{document.body.removeChild(tmp);}catch(e){} }
+  try{
+    if(typeof QRCode==='undefined'){cleanup();cb(null);return;}
+    new QRCode(tmp,{text:text,width:1200,height:1200,
+      colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.L});
+  }catch(e){ cleanup(); cb(null); return; }
+  (function poll(){
+    var cv=tmp.querySelector('canvas');
+    if(cv&&cv.width>0){
+      var du='';
+      try{ du=cv.toDataURL('image/png'); }catch(e){ du=''; }
+      // Épkézláb QR jóval nagyobb, mint egy üres vászon
+      if(du&&du.indexOf('data:image/png')===0&&du.length>2000){ cleanup(); cb(du); return; }
+    }
+    if(Date.now()>deadline){ cleanup(); cb(null); return; }
+    requestAnimationFrame(poll);
+  })();
+}
+
+// Korlátos verseny: legfeljebb PRINT_DEADLINE_MS-ig várunk a
+// visszaigazolásra. Ha nem jön, a tétel a sorba kerül és a
+// címkére rákerül a jelölés. Ha már tudjuk, hogy nincs kapcsolat,
+// nem várunk feleslegesen.
+function registerThenPrint(w,batch,pills,wText,snap,qrText,qrUrl,weight){
+  var payload={action:'gyartas',flavor:snap,batch:batch,weight:weight,
+               confirmed:false,printedAt:new Date().toISOString()};
+  var label=batch+' · '+snap+' · '+weight+' g';
+  var done=false;
+  var skipRace=(navigator.onLine===false)||lastSendFailed;
+
+  function finish(pending){
+    if(done)return; done=true;
+    if(pending) qAdd(payload,label);
+    writeLabelInto(w,batch,pills,wText,qrUrl,snap,pending);
+    afterPrint(batch,pending);
+  }
+  if(skipRace){ finish(true); return; }
+
+  var timer=setTimeout(function(){ finish(true); },PRINT_DEADLINE_MS);
+  fetch(WEB_APP_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      clearTimeout(timer);
+      if(done)return;                       // a határidő már lejárt, sorba került
+      setNet(true);
+      if(res&&res.ok===false){
+        done=true;
+        try{w.close();}catch(e){}
+        lockPrintBtn(false);
+        hardBlock('A SZERVER ELUTASÍTOTTA A REGISZTRÁCIÓT',
+          (res.error||'Ismeretlen ok')+'<br><br>A címke NEM lett kinyomtatva.',false);
+        return;
+      }
+      finish(false);
+    })
+    .catch(function(){ clearTimeout(timer); setNet(false); finish(true); });
+}
+
+function afterPrint(batch,pending){
+  todayCount++; document.getElementById('todayCount').textContent=todayCount;
+  if(!qSave.__skip){ try{localStorage.setItem('bruno_cnt_'+dateKey(),todayCount);}catch(ex){} }
+  seqNum++; document.getElementById('seqDisplay').textContent=p2(seqNum);
+  lockPrintBtn(false);
+  showToast(pending ? '⚠ Kinyomtatva — rögzítés függőben ('+batch+')'
+                    : '✅ Rögzítve és nyomtatva — '+batch);
+  resetForm();
+}
+
+function lockPrintBtn(on,txt){
+  var b=document.getElementById('printBtn');
+  if(!b)return;
+  if(on){ b.dataset.busy='1'; b.disabled=true; b.textContent=txt||'Rögzítés…'; }
+  else  { b.dataset.busy=''; b.disabled=!currentProduct; qRender(); }
+}
+
+function writeLabelInto(w,batch,pills,wText,qrUrl,prod,pending){
   var allergenText=pills.length?pills.join(', '):'Nincs allergén';
   var alClass=pills.length?'al':'al none';
   var today=displayDate();
@@ -748,6 +960,7 @@ function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
     +'<div class="r"><span class="rl">Gy.szám</span><span class="rb">'+batch+'</span></div>'
     +'<div class="r"><span class="rl">Dátum</span><span class="rv">'+today+'</span></div>'
     +'</div></div>'
+    +(pending?'<div style="width:calc(100% + 8mm);margin:1mm -4mm;padding:1.6mm 0;background:#000;color:#fff;font-size:10pt;font-weight:800;letter-spacing:0.2mm;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">*** ROGZITES FUGGOBEN ***</div>':'')
     +'<div class="qrs">'
     +(qrUrl?'<div class="qrbox"><img src="'+qrUrl+'"></div>':'')
     +'<div class="qrt">'+batch+'</div>'
@@ -759,6 +972,19 @@ function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
   try{ w.document.open(); w.document.write(h); w.document.close(); }catch(e){}
   return w;
 }
+
+
+// ── INDÍTÁS: sor visszatöltése, ébresztő hívás, keepalive ──
+qLoad(); qRender(); qPump();
+wakePing();                       // hidegindítás feloldása még a nap első nyomtatása előtt
+setInterval(wakePing,300000);     // 5 percenként — ritka, de melegen tartja a példányt
+setInterval(function(){ if(qStats().waiting>0)qPump(); },5000);
+window.addEventListener('online',function(){
+  Q.forEach(function(x){ if(x.state==='failed'){x.state='pending';x.tries=0;} });
+  qSave(); wakePing(); qPump();
+});
+window.addEventListener('offline',function(){ setNet(false); });
+
 </script>
 </body>
 </html>
