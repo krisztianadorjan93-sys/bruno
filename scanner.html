@@ -663,16 +663,23 @@ function setNet(ok){
 }
 function pingServer(){
   if(navigator.onLine===false){setNet(false);return;}
-  // navigator.onLine hazudhat -> tényleges szerver-hívás
-  fetch(DEPLOY_URL+'?action=checkBatch&batch=__ping__',{cache:'no-store'})
-    .then(function(r){return r.json();})
-    .then(function(){setNet(true);})
-    .catch(function(){setNet(false);});
+  // Életjel. Két fontos változás:
+  //  1) selfTest, NEM checkBatch&batch=__ping__ — az utóbbi nemlétező
+  //     gyártási számot keres, ezért végigolvassa a teljes MOZGÁS LOG-ot
+  //     (mérve 3,7-6,7 s), a selfTest 1,8-3,2 s és nem olvas logot.
+  //  2) MINDEN HTTP 200 választ online-nak veszünk, a válasz TARTALMÁTÓL
+  //     FÜGGETLENÜL. Korábban .json() futott: ha a válasz alakja bármiért
+  //     megváltozott volna, a parse hibája offline-nak látszott volna, és
+  //     a netBlock letilthatta volna a szkennelést mind a négy üzletben.
+  //     A törzset szándékosan nem olvassuk.
+  fetch(DEPLOY_URL+'?action=selfTest',{cache:'no-store'})
+    .then(function(r){ setNet(r.status===200); })
+    .catch(function(){ setNet(false); });
 }
 window.addEventListener('online',pingServer);
 window.addEventListener('offline',function(){setNet(false);});
 pingServer();
-setInterval(pingServer,30000);
+setInterval(pingServer,120000);   // 30 mp -> 2 perc: negyede a hívásnak
 
 // Kapcsolat teszt betolteskor
 try{
