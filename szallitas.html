@@ -2316,7 +2316,7 @@ var qrcode = function() {
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;padding-bottom:100px;}
+body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;padding-bottom:100px;overscroll-behavior-y:contain;}html{overscroll-behavior-y:contain;}
 .top{background:#141414;border-bottom:1px solid #222;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .brand{font-size:15px;font-weight:700;color:#fff;}.brand span{color:#D0783A;}
 .status{font-size:11px;color:#555;font-family:monospace;}.status.on{color:#D0783A;font-weight:600;}
@@ -2352,7 +2352,7 @@ input[type=text]{font-family:'DM Mono',monospace;}
 .item-meta{font-size:10px;color:#555;font-family:monospace;margin-top:1px;}
 .item-del{background:none;border:none;color:#444;font-size:16px;cursor:pointer;}.item-del:hover{color:#ff5555;}
 .empty{text-align:center;color:#333;font-size:12px;padding:20px;border:1px dashed #262626;border-radius:8px;line-height:1.8;}
-.header-bar{background:#251a0f;border:1px solid #5a3a1a;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.header-bar{background:#251a0f;border:1px solid #5a3a1a;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;box-shadow:0 6px 14px rgba(0,0,0,.55);}
 .header-bar .name{font-size:16px;font-weight:700;color:#D0783A;}
 .header-bar .count{font-size:26px;font-weight:700;font-family:monospace;color:#fff;}
 .header-bar .clbl{font-size:9px;color:#666;text-align:right;}
@@ -2392,6 +2392,8 @@ optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;
 @keyframes fxsp{to{transform:rotate(360deg);}}
 @keyframes fxedge{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
 .item-row.justadded{animation:jadd 1.1s ease;}
+.item-row.legutobb{border-color:#5DCAA5;background:#0e1a16;}
+.lastlbl{font-size:8px;font-weight:800;letter-spacing:1.1px;color:#5DCAA5;text-transform:uppercase;margin-bottom:3px;}
 .item-row.baditem{background:#2a0a0a!important;border-color:#5a1a1a!important;}
 @keyframes jadd{0%{background:#0f5a2a;border-color:#2ad06a;transform:scale(1.03);}35%{background:#0f5a2a;border-color:#2ad06a;}100%{background:#111;border-color:#222;transform:scale(1);}}
 .ordbtn{background:#2a1a1a;border:1px solid #5a2a2a;color:#c88;border-radius:6px;font-size:10px;font-weight:700;padding:5px 9px;cursor:pointer;font-family:inherit;white-space:nowrap;}
@@ -2482,7 +2484,7 @@ function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classL
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('v');setTimeout(function(){t.classList.remove('v');},2200);}
 
 function pick(el,s){document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');store=s;document.getElementById('startBtn').disabled=false;}
-function start(){if(!store)return;items=[];document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();loadPendingOrders();show('s2');}
+function start(){if(!store)return;items=[];kezdesIdo=p2(new Date().getHours())+':'+p2(new Date().getMinutes());szallTorol();document.getElementById('activeName').textContent=store;document.getElementById('activeCount').textContent='0';document.getElementById('hstat').textContent=store+' - aktiv';document.getElementById('hstat').classList.add('on');renderItems();loadPendingOrders();show('s2');}
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -2774,7 +2776,7 @@ function addItem(){
         it.check='bad'; it.err='Nem szerepel a rendszerben';
       } else { it.check='ok'; }
       if(it.check==='bad'){fxError();}
-      renderItems();
+      renderItems();szallMent();
     })
     .catch(function(){
       setNet(false);
@@ -2812,21 +2814,105 @@ function reallyAddItem(f,b,w){
   document.getElementById('activeCount').textContent=items.length;
   document.getElementById('closeBtn').disabled=false;
   renderItems();toast(f+' hozzaadva');
+  szallMent();
   return true;
 }
-function removeItem(i){if(items[i])bumpOrder(items[i].f,1);items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();}
+function removeItem(i){if(items[i])bumpOrder(items[i].f,1);items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();szallMent();}
+// ── A BESZKENNELT LISTA TULELI AZ UJRATOLTEST ──────────────────
+//  Eddig az items csak a memoriaban volt. Egy veletlen frissites
+//  (telefonon a felso gorgetes) 70-80 tegely ujraszkennelesevel jart.
+//  Az UZLET nelkul a tetelek semmit nem jelentenek, ezert azt is
+//  mentjuk, a nappal es a kezdes idopontjaval egyutt.
+var SZALL_KEY='bruno_szall_akt';
+var kezdesIdo='';
+
+function szallMent(){
+  try{
+    if(!store||!items.length){ localStorage.removeItem(SZALL_KEY); return; }
+    localStorage.setItem(SZALL_KEY,JSON.stringify({
+      store:store, items:items, nap:dk(), kezdes:kezdesIdo, slSeq:slSeq
+    }));
+  }catch(e){}
+}
+function szallTorol(){ try{ localStorage.removeItem(SZALL_KEY); }catch(e){} }
+function szallOlvas(){
+  try{
+    var o=JSON.parse(localStorage.getItem(SZALL_KEY)||'null');
+    if(o&&o.store&&o.items&&o.items.length)return o;
+  }catch(e){}
+  return null;
+}
+
+// A kerdes MINDEN mas ELOTT fut le. Ha a sofor kozben mar beszkennelt
+// harmat, a kerdes kartekony lenne -- ezert nem varunk vele semmire.
+// Es szandekosan NEM tolti be csendben: egy elozo napi felbehagyott
+// lista nem szivaroghat bele a mai szallitmanyba.
+function szallVisszaKerdez(){
+  var o=szallOlvas(); if(!o)return;
+  var maie=(o.nap===dk());
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.985);z-index:100003;'
+    +'display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;'
+    +'flex-direction:column;font-family:inherit;';
+  ov.innerHTML='<div style="font-size:56px;margin-bottom:12px;">\uD83D\uDCE6</div>'
+    +'<div style="font-size:21px;font-weight:900;color:#fff;margin-bottom:12px;">Van egy be nem fejezett szallitas</div>'
+    +'<div style="font-size:16px;color:#ccc;line-height:1.8;max-width:400px;margin-bottom:8px;">'
+    +'<b style="color:#D0783A;font-size:19px;">'+o.store+'</b><br>'
+    +o.items.length+' tetel<br>'
+    +'elkezdve '+(o.kezdes||'?')+'-kor'
+    +(maie?'':'<br><span style="color:#ffb0b0;font-weight:700;">FIGYELEM: nem mai ('+o.nap+')</span>')
+    +'</div>'
+    +'<div style="font-size:12px;color:#777;max-width:380px;margin-bottom:22px;line-height:1.6;">'
+    +'Ha ujat kezdesz, ez a lista veglegesen elveszik.</div>'
+    +'<button id="szFolyt" style="background:#5DCAA5;color:#062018;border:none;border-radius:10px;'
+    +'padding:16px 34px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;">Folytatom</button>'
+    +'<button id="szUj" style="background:transparent;color:#ff9090;border:1px solid #ff9090;'
+    +'border-radius:8px;padding:11px 20px;font-size:13px;cursor:pointer;font-family:inherit;">Ujat kezdek</button>';
+  document.body.appendChild(ov);
+  document.getElementById('szFolyt').onclick=function(){
+    store=o.store; items=o.items||[]; kezdesIdo=o.kezdes||'';
+    if(o.slSeq)slSeq=o.slSeq;
+    document.getElementById('activeName').textContent=store;
+    document.getElementById('activeCount').textContent=items.length;
+    document.getElementById('hstat').textContent=store+' - aktiv';
+    document.getElementById('hstat').classList.add('on');
+    document.getElementById('closeBtn').disabled=(items.length===0);
+    renderItems(); loadPendingOrders(); show('s2');
+    document.body.removeChild(ov);
+    toast('Folytatod: '+store+' ('+items.length+' tetel)');
+  };
+  document.getElementById('szUj').onclick=function(){
+    szallTorol(); document.body.removeChild(ov);
+  };
+}
+
 function renderItems(){
   var el=document.getElementById('itemList');
   if(items.length===0){el.innerHTML='<div class="empty">Meg nincs tetel.<br>Szkenneld be vagy add hozza a fagyikat.</div>';return;}
-  el.innerHTML=items.map(function(it,i){
+  // CSAK A MEGJELENITES fordul meg: a legutobb beszkennelt kerul felulre,
+  // hogy 70-80 tegelynel ne kelljen minden szkenneles utan legorgetni.
+  // Az ADATOK sorrendje valtozatlan -- a szallitolevel es a szerverre
+  // kuldott lista pontosan olyan marad, mint eddig.
+  //
+  // CSAPDA, amire figyelni kell: a removeItem() a VALODI tombindexszel
+  // dolgozik. Ha a megjelenitest megforditjuk, de az indexeket nem
+  // kepezzuk vissza, a torles gomb a ROSSZ tegelyt torli -- nemann, es
+  // pont a leghosszabb listakon. Ezert lent mindenhol "i" megy at,
+  // ami a valodi index, NEM a megjelenitesi pozicio.
+  var sorok=[];
+  for(var i=items.length-1;i>=0;i--){ (function(it,i){
     var badge='',extra='';
     if(it.check==='ok')badge='<span style="color:#5DCAA5;font-weight:800;">\u2713</span>';
     else if(it.check==='pending')badge='<span style="color:#FAC775;">\u27F3</span>';
     else if(it.check==='unknown')badge='<span style="color:#666;">?</span>';
     else if(it.check==='bad'){badge='<span style="color:#ff5555;font-weight:800;">\u2715</span>';
       extra='<div style="font-size:10px;color:#ff8888;margin-top:2px;line-height:1.4;">'+(it.err||'')+'</div>';}
-    return '<div class="item-row'+(i===justAddedIdx?' justadded':'')+(it.check==='bad'?' baditem':'')+'"><div class="item-num">'+(i+1)+'</div><div class="item-info"><div class="item-name">'+it.f+' '+badge+'</div><div class="item-meta">'+it.b+' | '+it.w+'g</div>'+extra+'</div><button class="item-del" onclick="removeItem('+i+')">\u2715</button></div>';
-  }).join('');
+    // A sofor hozzaszokott a regi sorrendhez. A jelolo mondja meg,
+    // hogy nem keveredett ossze semmi, csak felulre kerult az utolso.
+    var jel=(i===items.length-1)?'<div class="lastlbl">Legutobb beszkennelve</div>':'';
+    sorok.push('<div class="item-row'+(i===items.length-1?' legutobb':'')+(i===justAddedIdx?' justadded':'')+(it.check==='bad'?' baditem':'')+'"><div class="item-num">'+(i+1)+'</div><div class="item-info">'+jel+'<div class="item-name">'+it.f+' '+badge+'</div><div class="item-meta">'+it.b+' | '+it.w+'g</div>'+extra+'</div><button class="item-del" onclick="removeItem('+i+')">\u2715</button></div>');
+  })(items[i],i); }
+  el.innerHTML=sorok.join('');
 }
 
 function closeDelivery(){
@@ -2858,6 +2944,7 @@ function closeDelivery(){
     document.getElementById('hstat').textContent='Lezarva: '+sn;
     document.getElementById('hstat').classList.remove('on');
     slSeq++;
+    szallTorol();          // sikeres lezaras utan a mentett allapot nem kell
     show('s3');
     toast('Szállítólevél kész!');
   }
@@ -3185,7 +3272,10 @@ function parseScannedQR(url){
 }
 
 function cancelDel(){if(!confirm('Torlod a szallitast?'))return;newDel();}
-function newDel(){items=[];store='';document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});document.getElementById('startBtn').disabled=true;document.getElementById('hstat').textContent='Nem aktiv';document.getElementById('hstat').classList.remove('on');show('s1');}
+function newDel(){items=[];store='';szallTorol();document.querySelectorAll('.store-btn').forEach(function(b){b.classList.remove('sel');});document.getElementById('startBtn').disabled=true;document.getElementById('hstat').textContent='Nem aktiv';document.getElementById('hstat').classList.remove('on');show('s1');}
+
+// A be nem fejezett szallitas kerdese MINDEN mas elott.
+szallVisszaKerdez();
 
 // Kapcsolat teszt betolteskor
 try{
