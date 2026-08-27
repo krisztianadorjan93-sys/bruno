@@ -445,10 +445,93 @@ function doCfm(){closeCfm();send(selOp,'','')}
 function sendExtra(){var m=document.getElementById('xmv').value,h=document.getElementById('xhv').value;
   if(selOp==='athelyezes'){if(!h){toast('Valaszd ki hova!',1);return}if(h===store){toast('Nem helyezheted at ugyanoda!',1);return}}send(selOp,m,h)}
 
+// A Mennyiseg modositas KIMARAD a zarbol: azt jogos ismetelni.
+var DUP_KIVETEL={mennyiseg:true};
+var DUP_ABLAK_MS=60000;
+
+function dupKulcs(id,batch){ return (batch||'').trim()+'|'+id; }
+
+function dupOlvas(){
+  try{ return JSON.parse(localStorage.getItem('bruno_dup')||'{}')||{}; }
+  catch(e){ return {}; }
+}
+function dupIr(m){
+  // Takaritas: ami regebbi az ablaknal, az nem kell.
+  var most=Date.now(),ki={};
+  for(var k in m){ if(most-m[k]<DUP_ABLAK_MS*4) ki[k]=m[k]; }
+  try{ localStorage.setItem('bruno_dup',JSON.stringify(ki)); }catch(e){}
+}
+
+// A "Megis elkuldom" MINDEN megnyomasa naplozva. Ha gyakran nyomjak,
+// a szabaly rossz, nem az emberek -- es ez az adat mondja meg.
+function dupNaplo(id,batch,muvelet,elteltMs){
+  try{
+    var n=JSON.parse(localStorage.getItem('bruno_dup_naplo')||'[]')||[];
+    n.push({t:new Date().toISOString(),store:store,batch:batch,
+            muvelet:muvelet,eltelt_mp:Math.round(elteltMs/1000)});
+    if(n.length>200)n=n.slice(-200);
+    localStorage.setItem('bruno_dup_naplo',JSON.stringify(n));
+  }catch(e){}
+}
+
+// EGYSZER hasznalhato atengedo jelzo. Enelkul a "Megis elkuldom"
+// altal ujrahivott send() ismet belefutna a zarba (a bejegyzest epp
+// most frissitettuk), az ablak ujra kinyilna, es a muvelet SOHA nem
+// menne el -- naplozva, de elkuldetlenul. Meresnel ez elo is jott.
+var _dupAtenged=null;
+
+function dupEngedve(id,batch,muvelet){
+  if(DUP_KIVETEL[id])return true;
+  var k=dupKulcs(id,batch);
+  if(_dupAtenged===k){ _dupAtenged=null; return true; }
+  var m=dupOlvas(), most=Date.now();
+  var elozo=m[k];
+  if(elozo && (most-elozo)<DUP_ABLAK_MS){
+    var eltelt=most-elozo;
+    dupBlokk(muvelet,batch,eltelt,function(){
+      dupNaplo(id,batch,muvelet,eltelt);
+      var m2=dupOlvas(); m2[k]=Date.now(); dupIr(m2);
+      _dupAtenged=k;
+      send(id,_dupMar,_dupHon);          // ujra, most mar atengedve
+    });
+    return false;
+  }
+  m[k]=most; dupIr(m);
+  return true;
+}
+
+// A blokkolo felulet. Ket gomb: alapertelmezes a BEZARAS.
+function dupBlokk(muvelet,batch,elteltMs,megis){
+  fxError();
+  var ov=document.getElementById('dupOv');
+  if(!ov){ ov=document.createElement('div'); ov.id='dupOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(120,10,10,.97);z-index:100002;'
+      +'display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;'
+      +'flex-direction:column;font-family:inherit;';
+    document.body.appendChild(ov);
+  }
+  ov.style.display='flex';
+  ov.innerHTML='<div style="font-size:70px;margin-bottom:10px;">\u26A0\uFE0F</div>'
+    +'<div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:10px;line-height:1.3;">Ezt m\u00E1r elk\u00FCldted</div>'
+    +'<div style="font-size:15px;color:#ffd8d8;line-height:1.7;max-width:420px;margin-bottom:20px;">'
+    +'<b>'+muvelet+'</b><br><span style="font-family:monospace;">'+batch+'</span><br>'
+    +Math.round(elteltMs/1000)+' m\u00E1sodperce.<br><br>'
+    +'Ha nem l\u00E1ttad a visszajelz\u00E9st, att\u00F3l m\u00E9g <b>\u00E1tment</b>. '
+    +'M\u00E9gegyszer elk\u00FCldeni k\u00E9t bejegyz\u00E9st csin\u00E1l.</div>'
+    +'<button id="dupNo" style="background:#fff;color:#a01010;border:none;border-radius:10px;'
+    +'padding:16px 34px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;">Rendben, nem k\u00FCld\u00F6m</button>'
+    +'<button id="dupYes" style="background:transparent;color:#ffb0b0;border:1px solid #ffb0b0;'
+    +'border-radius:8px;padding:11px 20px;font-size:13px;cursor:pointer;font-family:inherit;">M\u00E9gis elk\u00FCld\u00F6m</button>';
+  document.getElementById('dupNo').onclick=function(){ ov.style.display='none'; };
+  document.getElementById('dupYes').onclick=function(){ ov.style.display='none'; megis(); };
+}
+
+var _dupMar='',_dupHon='';
 function send(id,mar,hon){
   // ── ÜRES AZONOSÍTÓ: itt állunk meg, MIELŐTT bármi zöld villanna.
   //    Optimistic UI mellett a hamis sikerjelzés a legveszélyesebb,
   //    ezért az ellenőrzés a visszajelzés ELÉ kerül.
+  _dupMar=mar; _dupHon=hon;
   var _fl=(D.flavor||'').trim(), _ba=(D.batch||'').trim();
   if(!_fl||!_ba||!store){
     var _mi=[];
@@ -460,6 +543,17 @@ function send(id,mar,hon){
     return;
   }
   var map={szallitas:'Szallitas atvetel',kibontas:'Kibontas',elfogyott:'Elfogyott',toltos:'Megsemmisitesre var',mennyiseg:'Mennyiseg modositas',megsemmisitve:'Megsemmisitve',athelyezes:'Athelyezes uzletek kozott'};
+
+  // ── DUPLIKATUM-VEDELEM ────────────────────────────────────────
+  //  Itt nem a kamera olvas duplan (a beolvasas csak kitolti az
+  //  adatokat), hanem a dolgozo nyomja meg ujra a muveleti gombot,
+  //  mert nem biztos benne, hogy atment. A send() OPTIMISTA: azonnal
+  //  sorba teszi, szerverválasz nélkül -- igy lett Kolosyn HAROM
+  //  KIBONTAS ugyanarra a tegelyre.
+  //  60 mp, mert ez nem 2 mp-es kameratevedes, hanem emberi ismetles.
+  //  localStorage-ban is: ha a dolgozo frissiti az oldalt, mert "nem
+  //  tortent semmi", memoriaban a zar ujra kinyilna.
+  if(!dupEngedve(id,_ba,map[id]||id))return;
   var payload={action:'scanner_submit',store:store,flavor:D.flavor,batch:D.batch,
                weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
   if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}

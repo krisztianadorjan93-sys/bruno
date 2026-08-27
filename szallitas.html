@@ -2757,7 +2757,7 @@ function addItem(){
   // ── OPTIMISTIC: azonnal bekerül a listába, a szállító nem vár ──
   //    Az állapot-ellenőrzés a háttérben fut; ha gond van, az adott
   //    tétel pirosra vált a listában, a munka nem áll meg.
-  reallyAddItem(f,b,w);
+  if(!reallyAddItem(f,b,w))return;   // duplikatum -> nincs allapot-lekerdezes sem
   var myIdx=items.length-1;
   items[myIdx].check='pending';
   fetch(DEPLOY_URL+'?action=checkBatch&batch='+encodeURIComponent(b),{cache:'no-store'})
@@ -2782,7 +2782,24 @@ function addItem(){
     });
 }
 
+// Ket vedelmi vonal a duplikatum ellen. Ez az ELSO es a donto:
+// itt fut at a szkennelt ES a kezzel beirt tetel is, ezert a
+// kamera-visszahivasban vegzett ellenorzes nem lenne eleg.
+// VISSZATER: true ha bekerult, false ha elutasitottuk. Az addItem
+// ezt MEGNEZI — enelkul az items.length-1 rossz tetelre mutatna.
 function reallyAddItem(f,b,w){
+  var bt=(b||'').trim();
+  for(var d=0;d<items.length;d++){
+    if((items[d].b||'').trim()===bt){
+      fxError();
+      flash(false,'Ezt a tegelyt mar hozzaadtad',[
+        {text:items[d].f,big:true},
+        {text:bt,mono:true},
+        {text:(d+1)+'. tetel a listan'}
+      ]);
+      return false;
+    }
+  }
   items.push({f:f,b:b,w:w});
   justAddedIdx=items.length-1;
   bumpOrder(f,-1);
@@ -2795,6 +2812,7 @@ function reallyAddItem(f,b,w){
   document.getElementById('activeCount').textContent=items.length;
   document.getElementById('closeBtn').disabled=false;
   renderItems();toast(f+' hozzaadva');
+  return true;
 }
 function removeItem(i){if(items[i])bumpOrder(items[i].f,1);items.splice(i,1);document.getElementById('activeCount').textContent=items.length;document.getElementById('closeBtn').disabled=(items.length===0);renderItems();}
 function renderItems(){
@@ -3129,8 +3147,15 @@ function scanPhoto(inp){
   inp.value='';
 }
 
+var _utolsoQr='', _utolsoQrIdo=0;
 function parseScannedQR(url){
   if(navigator.onLine===false){setNet(false);netBlockScan();return;}
+  // MASODIK vedelmi vonal: ugyanaz a QR 2 mp-en belul ujra.
+  // Szandekosan MODUL-szintu valtozo: a kamera bezarasa es
+  // ujranyitasa NEM nullazza, mert a hiba pont ott tortent.
+  var most=Date.now();
+  if(url===_utolsoQr && (most-_utolsoQrIdo)<2000){ return; }
+  _utolsoQr=url; _utolsoQrIdo=most;
   var r=parseTubQR(url);
   if(!r){fxError();toast('Ervenytelen QR kod');return;}
   var sel=document.getElementById('aF');
@@ -3139,6 +3164,19 @@ function parseScannedQR(url){
   }
   if(r.batch)document.getElementById('aB').value=r.batch;
   if(r.weight)document.getElementById('aW').value=r.weight;
+  // Ha mar a listan van, ne zold "beolvasva" jojjon: a szallito
+  // ebbol tudna meg, hogy nem kell megnyomnia a hozzaadast.
+  for(var d=0;d<items.length;d++){
+    if((items[d].b||'').trim()===(r.batch||'').trim()){
+      fxError();
+      flash(false,'Ezt a tegelyt mar hozzaadtad',[
+        {text:items[d].f,big:true},
+        {text:r.batch,mono:true},
+        {text:(d+1)+'. tetel a listan'}
+      ]);
+      return;
+    }
+  }
   flash(true,'QR beolvasva',[
     {text:r.flavor,big:true},
     {text:r.batch,mono:true},
