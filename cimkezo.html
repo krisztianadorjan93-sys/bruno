@@ -2787,13 +2787,31 @@ function qrDataUrl(text,cell){
   return q.createDataURL(cell,2);
 }
 
+// VEKTOR. A createDataURL kepponotonkent, JS-bol epitette fel a GIF-et
+// (merve 71 ms cell=36 mellett); ez 1,5 ms. Es nincs "felbontas": a
+// nyomtato a sajat racsan rajzolja ki, nem kell a 48 mm-hez tartozo
+// 567 px-re se le-, se felskalazni.
+function qrSvg(text){
+  var q=qrcode(0,'L');
+  q.addData(qrEncodeUtf8(text),'Byte');
+  q.make();
+  var s=q.createSvgTag({scalable:true,margin:2});
+  // A veszelyes kimenet nem a csunya QR, hanem az URES: ha a vektor
+  // barmiert nem tartalmaz modult, az a papiron NEMAN derulne ki.
+  // Itt kapjuk el, a nyomtatas elott.
+  if(s.indexOf('<path')<0) throw new Error('ures QR');
+  return s;
+}
+
 function generateQR(id,text,size){
   var el=document.getElementById(id);el.innerHTML='';
   try{
-    var img=document.createElement('img');
-    img.src=qrDataUrl(text,8);
-    img.style.width='100%';img.style.height='auto';img.style.display='block';
-    el.appendChild(img);
+    // Az elonezet UGYANAZT a generatort hasznalja, mint a nyomtatas.
+    // Ezert ha a kepernyon latszik a QR, az bizonyitek arra, hogy a
+    // cimkere is kerul: nincs ket kulon ut, ami elterhetne.
+    el.innerHTML=qrSvg(text);
+    var g=el.firstElementChild;
+    if(g){g.style.width='100%';g.style.height='auto';g.style.display='block';}
   }catch(e){console.warn('QR:',e);}
 }
 
@@ -3019,14 +3037,20 @@ function finishPrint(w,batch,pills,wText,qrText,snap,offline){
     done();
   }
 
-  // Szinkron, időzítő nélkül: a könyvtár azonnal visszaadja a képet.
-  // Cellaméret 36 -> ~1188 px, ami a korábbi 1200 px felbontásának
-  // felel meg. A méretcsökkentés külön tétel marad.
+  // Szinkron, idozito nelkul. Vektor megy a cimkere.
+  // Ha a vektor barmiert nem all elo, NEM ures QR-t nyomtatunk,
+  // hanem visszaesunk a bitkepre. cell=18 -> 594 px, ami a nyomtato
+  // 48 mm-hez tartozo 567 px-e FOLOTT van, tehat nem homalyosodik.
   try{
-    emit(qrDataUrl(qrText,36));
+    emit(qrSvg(qrText));
   }catch(e){
-    console.warn('QR:',e);
-    emit('');
+    console.warn('QR SVG, visszaeses bitkepre:',e);
+    try{
+      emit(qrDataUrl(qrText,18));
+    }catch(e2){
+      console.warn('QR bitkep is elbukott:',e2);
+      emit('');
+    }
   }
 }
 
@@ -3053,7 +3077,7 @@ function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
     +'.det{display:flex;flex-wrap:wrap;gap:0.5mm 4mm;justify-content:center;}'
     +'.qrs{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4mm 0;background:#fff;}'
     +'.qrbox{background:#fff;padding:3mm;display:inline-block;line-height:0;}'
-    +'.qrs img{width:48mm!important;height:48mm!important;max-width:none!important;display:block;}'
+    +'.qrs img,.qrs svg{width:48mm!important;height:48mm!important;max-width:none!important;display:block;}'
     +'.qrt{font-family:\'DM Mono\',Consolas,monospace;font-size:8pt;color:#666;text-align:center;margin-top:0.5mm;font-weight:600;}'
     +'.lf{background:#f5f5f5;width:calc(100% + 8mm);padding:2mm 4mm;font-size:11pt;color:#888;border-top:0.3mm solid #eee;line-height:1.3;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0 -4mm -4mm -4mm;}'
     +'@media print{@page{margin:0;size:62mm auto;}html,body{width:62mm;margin:0;padding:0;}}'
@@ -3069,7 +3093,7 @@ function writeLabelInto(w,batch,pills,wText,qrUrl,prod){
     +'<div class="r"><span class="rl">Dátum</span><span class="rv">'+today+'</span></div>'
     +'</div></div>'
     +'<div class="qrs">'
-    +(qrUrl?'<div class="qrbox"><img src="'+qrUrl+'"></div>':'')
+    +(qrUrl?'<div class="qrbox">'+(qrUrl.charAt(0)==='<'?qrUrl:'<img src="'+qrUrl+'">')+'</div>':'')
     +'<div class="qrt">'+batch+'</div>'
     +'</div>'
     +'<div class="lf">Minőségét megőrzi gyártástól számított 20 napig. &nbsp;|&nbsp; −15 °C alatt tárolandó.</div>'
