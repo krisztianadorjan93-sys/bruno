@@ -478,12 +478,19 @@ function dupNaplo(id,batch,muvelet,elteltMs){
 // altal ujrahivott send() ismet belefutna a zarba (a bejegyzest epp
 // most frissitettuk), az ablak ujra kinyilna, es a muvelet SOHA nem
 // menne el -- naplozva, de elkuldetlenul. Meresnel ez elo is jott.
+//
+// EGY ENGEDELY = EGY KULDES. A jelzot a send() LEGELEJEN fogyasztjuk
+// el (lasd ott), nem itt. Kulonben ha a send() korabban lep ki --
+// peldaul az ures azonosito agon --, a jelzo beragadna, es egy KESOBBI
+// hivas kapna ingyen megkerulest. A zar tehat nem kapcsol KI a
+// muveletre, csak ezt az egy kuldest engedi at, es az idobelyeg is
+// azonnal frissul, vagyis a 60 mp ujraindul.
 var _dupAtenged=null;
 
-function dupEngedve(id,batch,muvelet){
+function dupEngedve(id,batch,muvelet,atenged){
   if(DUP_KIVETEL[id])return true;
   var k=dupKulcs(id,batch);
-  if(_dupAtenged===k){ _dupAtenged=null; return true; }
+  if(atenged===k) return true;       // egyszer — a hivo mar el is fogyasztotta
   var m=dupOlvas(), most=Date.now();
   var elozo=m[k];
   if(elozo && (most-elozo)<DUP_ABLAK_MS){
@@ -532,6 +539,10 @@ function send(id,mar,hon){
   //    Optimistic UI mellett a hamis sikerjelzés a legveszélyesebb,
   //    ezért az ellenőrzés a visszajelzés ELÉ kerül.
   _dupMar=mar; _dupHon=hon;
+  // Az atengedo jelzot MINDEN send() elejen elfogyasztjuk, meg mielott
+  // barmi mas tortenhetne. Igy pontosan EGY send() hivasig el, akarhol
+  // is lep ki a fuggveny.
+  var _atenged=_dupAtenged; _dupAtenged=null;
   var _fl=(D.flavor||'').trim(), _ba=(D.batch||'').trim();
   if(!_fl||!_ba||!store){
     var _mi=[];
@@ -553,7 +564,7 @@ function send(id,mar,hon){
   //  60 mp, mert ez nem 2 mp-es kameratevedes, hanem emberi ismetles.
   //  localStorage-ban is: ha a dolgozo frissiti az oldalt, mert "nem
   //  tortent semmi", memoriaban a zar ujra kinyilna.
-  if(!dupEngedve(id,_ba,map[id]||id))return;
+  if(!dupEngedve(id,_ba,map[id]||id,_atenged))return;
   var payload={action:'scanner_submit',store:store,flavor:D.flavor,batch:D.batch,
                weight:D.weight||'',muvelet:map[id]||id,maradek:mar||''};
   if(id==='athelyezes'){payload.hova=hon||'';}else{payload.honnan=hon||'';}
