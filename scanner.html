@@ -314,6 +314,19 @@ function jumpToManual(){
   setTimeout(function(){card.style.borderColor='';},2500);
 }
 
+// A kezi beviteli mezok kiuritese. Eddig SOHA nem urultek: sem
+// sikeres kuldes utan, sem duplikatum-blokk utan. Emiatt a kovetkezo
+// tegelynel a regi iz/gyartasi szam/suly ott maradt a urlapon, es a
+// "Kuldes" gomb a REGI tegelyt kuldte volna el ujra.
+//
+// FORMATUMHIBANAL NEM hivjuk — ott a dolgozonak javitania kell azt,
+// amit beirt.
+function keziUrites(){
+  ['mf','mb','mw'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+}
+
 function manGo(){store=document.getElementById('sel').value;if(!store){toast('Valassz uzletet!',1);return}
   var f=document.getElementById('mf').value,b=document.getElementById('mb').value.trim(),w=document.getElementById('mw').value;
   if(!f||!b){toast('Iz es gyartasi szam kotelezo!',1);return}D={flavor:f.trim(),batch:b.trim(),weight:(w||'').trim()};
@@ -529,7 +542,13 @@ function dupBlokk(muvelet,batch,elteltMs,megis){
     +'padding:16px 34px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;">Rendben, nem k\u00FCld\u00F6m</button>'
     +'<button id="dupYes" style="background:transparent;color:#ffb0b0;border:1px solid #ffb0b0;'
     +'border-radius:8px;padding:11px 20px;font-size:13px;cursor:pointer;font-family:inherit;">M\u00E9gis elk\u00FCld\u00F6m</button>';
-  document.getElementById('dupNo').onclick=function(){ ov.style.display='none'; };
+  document.getElementById('dupNo').onclick=function(){
+    ov.style.display='none';
+    // A muvelet mar atment; a dolgozo a kovetkezo tegellyel dolgozik.
+    // A tub kepernyot NEM hagyjuk el: ha megis mas muveletet akar
+    // ugyanezen a tegelyen, azt itt tudja kivalasztani.
+    keziUrites();
+  };
   document.getElementById('dupYes').onclick=function(){ ov.style.display='none'; megis(); };
 }
 
@@ -635,7 +654,7 @@ function showError(msg){
   document.getElementById('suc').classList.add('s');
 }
 function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('a')});document.getElementById(id).classList.add('a');window.scrollTo(0,0)}
-function reset(){D={};selOp='';document.getElementById('xf').style.display='none';document.getElementById('suc').classList.remove('s');document.getElementById('cfm').classList.remove('s');show('s1')}
+function reset(){D={};selOp='';keziUrites();document.getElementById('xf').style.display='none';document.getElementById('suc').classList.remove('s');document.getElementById('cfm').classList.remove('s');show('s1')}
 function toast(m,e){var t=document.getElementById('toast');t.textContent=(e?'! ':'OK ')+m;t.className='toast '+(e?'ter':'tok')+' v';setTimeout(function(){t.classList.remove('v')},2500)}
 
 

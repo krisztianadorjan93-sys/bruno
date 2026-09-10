@@ -2789,6 +2789,30 @@ function addItem(){
 // kamera-visszahivasban vegzett ellenorzes nem lenne eleg.
 // VISSZATER: true ha bekerult, false ha elutasitottuk. Az addItem
 // ezt MEGNEZI — enelkul az items.length-1 rossz tetelre mutatna.
+// Duplikatum utan a mezoket KIURITJUK es a fokusz visszamegy a
+// szkennelesre: a tegely mar a listan van, a szallito a KOVETKEZOVEL
+// dolgozik tovabb. Ha bentmaradnanak, a kovetkezo beolvasas a regi
+// adatra ulne ra, es konnyen ujra a "mar hozzaadtad" ablakba futna.
+//
+// FONTOS a kulonbseg: FORMATUMHIBANAL a mezok BENT MARADNAK, mert
+// ott a szallitonak javitania kell azt, amit beirt — kiuritve
+// elveszne, amit epp gepelt.
+function urlapUrites(){
+  ['aF','aB','aW'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  // A fokuszt KESLELTETVE adjuk at: a hibavillanas teljes kepernyos
+  // fedvenye 1600 ms-ig all, es amig ott van, a mogotte levo gombra
+  // adott fokusz elveszik. Merve: fedveny alatt document.activeElement
+  // ures maradt. Ezert a fedveny eltunese utan fokuszalunk.
+  setTimeout(function(){
+    var g=document.getElementById('qrStartBtn');
+    if(!g) return;
+    try{ g.focus({preventScroll:true}); }catch(e){ try{ g.focus(); }catch(e2){} }
+    try{ g.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+  }, 1700);
+}
+
 function reallyAddItem(f,b,w){
   var bt=(b||'').trim();
   for(var d=0;d<items.length;d++){
@@ -2799,6 +2823,7 @@ function reallyAddItem(f,b,w){
         {text:bt,mono:true},
         {text:(d+1)+'. tetel a listan'}
       ]);
+      urlapUrites();
       return false;
     }
   }
@@ -3261,6 +3286,7 @@ function parseScannedQR(url){
         {text:r.batch,mono:true},
         {text:(d+1)+'. tetel a listan'}
       ]);
+      urlapUrites();
       return;
     }
   }
