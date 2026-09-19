@@ -2422,7 +2422,7 @@ optgroup{background:#1a1a1a;color:#555;}option{background:#1a1a1a;color:#e0e0e0;
 <div class="scr" id="s2">
 <div class="header-bar">
 <div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Akt&#237;v sz&#225;ll&#237;t&#225;s</div><div class="name" id="activeName">&#8211;</div></div>
-<div style="text-align:right;"><div class="count" id="activeCount">0</div><div class="clbl">tub</div></div>
+<div style="text-align:right;"><div class="count" id="activeCount">0</div><div class="clbl">tub</div><div id="badCount" style="display:none;margin-top:4px;background:#c01818;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:3px 7px;white-space:nowrap;"></div></div>
 </div>
 <div class="card" style="border-color:#5a3a1a;">
 <div class="card-t" style="color:#D0783A;">&#128203; F&#252;gg&#337; rendel&#233;sek</div>
@@ -2813,7 +2813,52 @@ function urlapUrites(){
   }, 1700);
 }
 
-function reallyAddItem(f,b,w){
+// ── SZKENNELT HOZZAADAS — optimista, 0 keslelteles ──────────────
+//  A beolvasas MAGA adja hozza a tetelt: nincs kulon "Hozzaadas"
+//  gombnyomas, es NEM varunk a szerverre. A tetel azonnal a listan van
+//  pipaval; a szerver-ellenorzes a hatterben fut, es ha gond van, a
+//  tetel UTOLAG valt pirosra, indoklassal.
+//
+//  MERVE a regi uton: QR -> zold pipa 3,4-5,5 mp (median 4,0), ugy
+//  hogy a gombnyomast azonnalinak vettuk. Az uj uton a pipa a
+//  beolvasas pillanataban ott van.
+function szkenneltHozzaad(f,b,w){
+  if(!reallyAddItem(f,b,w,true)) return false;
+  var idx=items.length-1;
+  items[idx].check='ok';          // optimista pipa
+  renderItems(); szallMent();
+  hatterEllenorzes(idx,b);
+  return true;
+}
+
+// A szerver-ellenorzes a hatterben. Csak ROSSZ eredmenyre valtoztat
+// allapotot — a jo eset nem ir felul semmit, mert mar pipa van.
+function hatterEllenorzes(idx,b){
+  fetch(DEPLOY_URL+'?action=checkBatch&batch='+encodeURIComponent(b),{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      setNet(true);
+      var it=items[idx]; if(!it||it.b!==b)return;
+      var st=(j&&j.state)?j.state:'', base=st.split(':')[0];
+      if(base==='ÜZLETBEN'||base==='KIBONTVA'||base==='MEGSEMMISÍTÉSRE_VÁR'){
+        it.check='bad';
+        it.err='Már kiszállítva'+(st.split(':')[1]?' ('+st.split(':')[1]+')':'')+' — SZKENNER kell hozzá';
+      } else if(base==='ELFOGYOTT'||base==='MEGSEMMISÍTVE'){
+        it.check='bad'; it.err='Lezárt tégely ('+base+')';
+      } else if(base==='ISMERETLEN'||!base){
+        it.check='bad'; it.err='Nem szerepel a rendszerben';
+      }
+      if(it.check==='bad'){ fxError(); renderItems(); szallMent(); }
+    })
+    .catch(function(){
+      // Halozati hiba: a pipat NEM vesszuk el. A tetel attol meg
+      // bekerult; a szerver a lezaraskor ugyis validal. A halozat
+      // allapotat a setNet jelzi kulon.
+      setNet(false);
+    });
+}
+
+function reallyAddItem(f,b,w,halk){
   var bt=(b||'').trim();
   for(var d=0;d<items.length;d++){
     if((items[d].b||'').trim()===bt){
@@ -2830,11 +2875,18 @@ function reallyAddItem(f,b,w){
   items.push({f:f,b:b,w:w});
   justAddedIdx=items.length-1;
   bumpOrder(f,-1);
-  flash(true,'Hozzáadva a szállítmányhoz',[
-    {text:f,big:true},
-    {text:b,mono:true},
-    {text:w+' g · '+items.length+'. tétel'}
-  ]);
+  if(halk){
+    // Szkennelt utnal NINCS teljes kepernyos villanas: az eltakarna a
+    // kamerakepet, es pont a gyors egymas utani szkennelest lassitana.
+    // Hang + rovid toast eleg, a tetel amugy is ott van a lista tetejen.
+    try{fxSuccess();}catch(e){}
+  } else {
+    flash(true,'Hozzáadva a szállítmányhoz',[
+      {text:f,big:true},
+      {text:b,mono:true},
+      {text:w+' g · '+items.length+'. tétel'}
+    ]);
+  }
   document.getElementById('aF').value='';document.getElementById('aB').value='';document.getElementById('aW').value='';
   document.getElementById('activeCount').textContent=items.length;
   document.getElementById('closeBtn').disabled=false;
@@ -2938,6 +2990,16 @@ function renderItems(){
     sorok.push('<div class="item-row'+(i===items.length-1?' legutobb':'')+(i===justAddedIdx?' justadded':'')+(it.check==='bad'?' baditem':'')+'"><div class="item-num">'+(i+1)+'</div><div class="item-info">'+jel+'<div class="item-name">'+it.f+' '+badge+'</div><div class="item-meta">'+it.b+' | '+it.w+'g</div>'+extra+'</div><button class="item-del" onclick="removeItem('+i+')">\u2715</button></div>');
   })(items[i],i); }
   el.innerHTML=sorok.join('');
+  // A pipa optimista, tehat egy tetel UTOLAG valhat pirossa — es a
+  // megforditott, hosszu listaban kigorgethet a kepbol. A ragados
+  // fejlecben levo szamlalo miatt akkor is latszik, ha nem latni a sort.
+  var rossz=0;
+  for(var q=0;q<items.length;q++) if(items[q].check==='bad') rossz++;
+  var bc=document.getElementById('badCount');
+  if(bc){
+    if(rossz>0){ bc.textContent='\u26A0 '+rossz+' hib\u00e1s'; bc.style.display='block'; }
+    else bc.style.display='none';
+  }
 }
 
 function closeDelivery(){
@@ -3238,7 +3300,11 @@ function startQRScan(){
   var sb=document.getElementById('qrStopBtn');
   el.style.display='block';sb.style.display='block';
   qrInst.start({facingMode:'environment'},{fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.75);return{width:s,height:s};},experimentalFeatures:{useBarCodeDetectorIfSupported:true},videoConstraints:{facingMode:{exact:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}},
-    function(text){stopCam();parseScannedQR(text);toast('QR beolvasva!');},
+    // A kamera NYITVA MARAD. Korabban minden beolvasas utan lezart,
+    // es a kovetkezo tegelyhez ujra meg kellett nyomni a gombot es
+    // kivarni a kamera indulasat. A duplaolvasast a parseScannedQR
+    // 2 mp-es zara fogja meg, nem a kamera bezarasa.
+    function(text){parseScannedQR(text);},
     function(){}
   ).then(function(){camActive=true;}).catch(function(){
     el.style.display='none';sb.style.display='none';
@@ -3290,11 +3356,15 @@ function parseScannedQR(url){
       return;
     }
   }
-  flash(true,'QR beolvasva',[
-    {text:r.flavor,big:true},
-    {text:r.batch,mono:true},
-    {text:r.weight?r.weight+' g':'—'}
-  ]);
+  // KOZVETLEN hozzaadas — a szallito nem nyom kulon gombot,
+  // es nem var a szerverre.
+  if(!r.weight){
+    // suly nelkul nem tudunk tetelt kepezni: marad a kezi kitoltes
+    toast('Ird be a sulyt, majd nyomd meg a Hozzaadast');
+    return;
+  }
+  szkenneltHozzaad(r.flavor,r.batch,r.weight);
+  toast(r.flavor+' · '+items.length+'. tetel');
 }
 
 function cancelDel(){if(!confirm('Torlod a szallitast?'))return;newDel();}
