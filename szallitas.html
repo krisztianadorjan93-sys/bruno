@@ -2825,11 +2825,48 @@ function urlapUrites(){
 //  MERVE a regi uton: QR -> zold pipa 3,4-5,5 mp (median 4,0), ugy
 //  hogy a gombnyomast azonnalinak vettuk. Az uj uton a pipa a
 //  beolvasas pillanataban ott van.
+// ── NAGY SIKERJELZES, AMI NEM BLOKKOL ───────────────────────────
+//  Ugyanolyan nagy es egyertelmu, mint a hibauzenet — de harom
+//  dologban KULONBOZIK tole, es pont ezektol nem lassitja a munkat:
+//
+//   1) pointer-events:none — a koppintas ATMEGY rajta. A Stop gomb,
+//      a lista, minden kattinthato marad alatta.
+//   2) attetszo hatter — a kamerakep LATSZIK mogotte, tehat a kez
+//      mar celozhat a kovetkezo tegelyre, amig ez lattszik.
+//   3) 600 ms utan magatol eltunik, es egy ujabb beolvasas AZONNAL
+//      felulirja (clearTimeout) — nem allnak sorba a villanasok.
+//
+//  A z-index SZANDEKOSAN a hibaablak (100000) ALATT van: ha valamiert
+//  mindketto eldordulne, a hiba nyer.
+function sikerVillanas(iz, sorszam){
+  var el=document.getElementById('okFlash');
+  if(!el){
+    el=document.createElement('div'); el.id='okFlash';
+    el.style.cssText='position:fixed;inset:0;z-index:99000;display:none;'
+      +'align-items:center;justify-content:center;flex-direction:column;'
+      +'text-align:center;padding:20px;font-family:inherit;'
+      +'pointer-events:none;background:rgba(8,58,34,.52);';
+    document.body.appendChild(el);
+  }
+  el.innerHTML=
+     '<div style="font-size:118px;line-height:1;font-weight:900;color:#7CFFB2;'
+    +'text-shadow:0 4px 22px rgba(0,0,0,.75);">\u2713</div>'
+    +'<div style="margin-top:12px;font-size:28px;font-weight:800;color:#fff;'
+    +'text-shadow:0 2px 12px rgba(0,0,0,.9);line-height:1.2;">'+iz+'</div>'
+    +'<div style="margin-top:6px;font-size:19px;font-weight:700;color:#7CFFB2;'
+    +'text-shadow:0 2px 12px rgba(0,0,0,.9);">'+sorszam+'. t\u00e9tel</div>';
+  el.style.display='flex';
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){ el.style.display='none'; }, 600);
+  try{ fxSuccess(); }catch(e){}
+}
+
 function szkenneltHozzaad(f,b,w){
   if(!reallyAddItem(f,b,w,true)) return false;
   var idx=items.length-1;
   items[idx].check='ok';          // optimista pipa
   renderItems(); szallMent();
+  sikerVillanas(f, items.length);
   hatterEllenorzes(idx,b);
   return true;
 }
@@ -2879,10 +2916,9 @@ function reallyAddItem(f,b,w,halk){
   justAddedIdx=items.length-1;
   bumpOrder(f,-1);
   if(halk){
-    // Szkennelt utnal NINCS teljes kepernyos villanas: az eltakarna a
-    // kamerakepet, es pont a gyors egymas utani szkennelest lassitana.
-    // Hang + rovid toast eleg, a tetel amugy is ott van a lista tetejen.
-    try{fxSuccess();}catch(e){}
+    // Halk mod: itt SEMMI visszajelzes. A hangot es a nagy pipat a
+    // hivo (szkenneltHozzaad -> sikerVillanas) adja, kulonben ketszer
+    // szolalna meg.
   } else {
     flash(true,'Hozzáadva a szállítmányhoz',[
       {text:f,big:true},
@@ -3066,7 +3102,15 @@ function closeDelivery(){
   if(navigator.onLine===false){netBlock(closeDelivery);return;}
   document.getElementById('closeBtn').dataset.busy='1';
   document.getElementById('closeBtn').disabled=true;
-  document.getElementById('closeBtn').textContent='Feldolgozás...';
+  // Nem lesz gyorsabb tole, de a szallito nem hiszi elakadtnak, es
+  // nem nyomja meg ujra. Ha 6 mp utan MEG tart (nagy szallitmany vagy
+  // lassu halozat), atvaltunk — a fix szam ott mar tevesztene.
+  var _cb=document.getElementById('closeBtn');
+  _cb.textContent='Feldolgozás… (kb. 3 másodperc)';
+  clearTimeout(_cb._t6);
+  _cb._t6=setTimeout(function(){
+    if(_cb.dataset.busy==='1') _cb.textContent='Feldolgozás… még tart, ne nyomd meg újra';
+  },6000);
   var sn=slN();
   var payload={store:store,slNum:sn,items:items.map(function(it){return{flavor:it.f,batch:it.b,weight:it.w};})};
   function onOk(result){
@@ -3078,7 +3122,8 @@ function closeDelivery(){
         msg=result.error||'Ismeretlen hiba';
       }
       fxError();alert(msg);
-      document.getElementById('closeBtn').dataset.busy='';
+      var _c=document.getElementById('closeBtn');
+      _c.dataset.busy=''; clearTimeout(_c._t6);
       zaroGombFrissit();
       return;
     }
@@ -3096,7 +3141,8 @@ function closeDelivery(){
     toast('Szállítólevél kész!');
   }
   function onErr(e){
-    document.getElementById('closeBtn').dataset.busy='';
+    var _c2=document.getElementById('closeBtn');
+    _c2.dataset.busy=''; clearTimeout(_c2._t6);
     zaroGombFrissit();
     netBlock(closeDelivery);
   }
@@ -3424,7 +3470,6 @@ function parseScannedQR(url){
     return;
   }
   szkenneltHozzaad(r.flavor,r.batch,r.weight);
-  toast(r.flavor+' · '+items.length+'. tetel');
 }
 
 function cancelDel(){if(!confirm('Torlod a szallitast?'))return;newDel();}
